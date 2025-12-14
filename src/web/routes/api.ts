@@ -77,38 +77,43 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       });
     }
 
-    // Handle repo clone if URL provided
-    const { repoUrl } = req.body;
+    // Auto-detect GitHub URLs in the query and clone them
     let repoDocs: DocumentInput[] = [];
+    const githubUrlRegex = /https?:\/\/github\.com\/[\w-]+\/[\w.-]+/gi;
+    const githubUrls = query.match(githubUrlRegex) || [];
     
-    if (repoUrl && typeof repoUrl === 'string' && (repoUrl.startsWith('http') || repoUrl.startsWith('git'))) {
+    if (githubUrls.length > 0) {
       try {
         const { loadDocumentsFromFolder } = await import('../../lib/index.js');
         const { simpleGit } = await import('simple-git');
-        
-        // Create temp dir
-        const tempDir = path.join(process.cwd(), 'temp_repos', `repo-${Date.now()}`);
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-        }
-        
-        // Clone repo using simple-git library
-        console.log(`Cloning repo ${repoUrl} to ${tempDir}`);
         const git = simpleGit();
-        await git.clone(repoUrl, tempDir, ['--depth', '1']);
         
-        // Load documents
-        const allowedExtensions = ['.ts', '.js', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.md', '.txt', '.json', '.xml', '.html', '.css', '.go', '.rs'];
-        repoDocs = await loadDocumentsFromFolder(tempDir, {
-          recursive: true,
-          extensions: allowedExtensions,
-        });
-        
-        // Cleanup repo
-        fs.rmSync(tempDir, { recursive: true, force: true });
+        for (const repoUrl of githubUrls) {
+          // Create temp dir for each repo
+          const tempDir = path.join(process.cwd(), 'temp_repos', `repo-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+          
+          // Clone repo using simple-git library
+          console.log(`[AutoClone] Cloning ${repoUrl} to ${tempDir}`);
+          await git.clone(repoUrl, tempDir, ['--depth', '1']);
+          
+          // Load documents
+          const allowedExtensions = ['.ts', '.js', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.md', '.txt', '.json', '.xml', '.html', '.css', '.go', '.rs'];
+          const docs = await loadDocumentsFromFolder(tempDir, {
+            recursive: true,
+            extensions: allowedExtensions,
+          });
+          repoDocs.push(...docs);
+          
+          // Cleanup repo
+          fs.rmSync(tempDir, { recursive: true, force: true });
+          console.log(`[AutoClone] Loaded ${docs.length} files from ${repoUrl}`);
+        }
       } catch (err) {
         console.error('Repo clone error:', err);
-        // Continue without repo documents, but maybe log it
+        // Continue without repo documents
       }
     }
 

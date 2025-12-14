@@ -35,20 +35,6 @@ class DeepResearchApp {
     this.browseFolderBtn = document.getElementById('browseFolderBtn');
       this.fileQueue = document.getElementById('fileQueue');
     
-    // Create inline repo input in options row
-    const optionsRow = document.querySelector('.options-row');
-    if (optionsRow && !document.getElementById('repoGroup')) {
-      const repoGroup = document.createElement('div');
-      repoGroup.className = 'option-group';
-      repoGroup.id = 'repoGroup';
-      repoGroup.innerHTML = `
-        <label><i class="fab fa-github"></i> Clone Repo</label>
-        <input type="text" id="repoInput" placeholder="github.com/user/repo" style="padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 0.85rem; width: 160px;">
-      `;
-      optionsRow.insertBefore(repoGroup, optionsRow.querySelector('.checkbox-group'));
-    }
-    this.repoInput = document.getElementById('repoInput');
-
     this.startResearchBtn = document.getElementById('startResearchBtn');
     this.progressSection = document.getElementById('progressSection');
     this.progressBar = document.getElementById('progressBar');
@@ -164,7 +150,7 @@ class DeepResearchApp {
             <li>💻 <strong>CLI Tool:</strong> Powerful command-line interface for scripting and automation</li>
             <li>📚 <strong>Library Module:</strong> Import into your own Node.js projects</li>
             <li>⚡ <strong>Background Processing:</strong> Long-running research with progress tracking</li>
-            <li>🔗 <strong>GitHub Repo Clone:</strong> Clone and analyze public GitHub repositories for code research</li>
+            <li>🔗 <strong>GitHub Repo Clone:</strong> Paste GitHub URLs in the query - repos are auto-cloned and analyzed</li>
           </ul>
 
           <h1 style="margin-top: 2em;">🧠 Model Comparison: Deep Research vs Deep Think</h1>
@@ -300,8 +286,7 @@ class DeepResearchApp {
         sourceTypes: this.sourcesSelect.value,
         includeCitations: true,
         refineWithThinking: this.deepThinkCheck ? this.deepThinkCheck.checked : false,
-        documents: uploadedFiles,
-        repoUrl: this.repoInput.value.trim() || undefined
+        documents: uploadedFiles
       };
 
       const response = await fetch('/api/research', {

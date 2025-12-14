@@ -48,7 +48,7 @@ Refers to **Gemini 3** series models (e.g., **Gemini 3 Pro**), which employ adva
 - 💻 **CLI Tool**: Powerful command-line interface for scripting and automation
 - 📚 **Library Module**: Import into your own Node.js projects
 - ⚡ **Background Processing**: Long-running research with progress tracking
-- 🔗 **GitHub Repo Clone**: Clone and analyze public GitHub repositories for code research (web UI)
+- 🔗 **GitHub Repo Clone**: Paste GitHub URLs in your query - repos are auto-cloned and analyzed
 
 ## 🚀 Quick Start
 

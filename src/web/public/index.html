@@ -14,7 +14,7 @@
       <div class="header-content">
         <div class="logo">
           <i class="fas fa-microscope"></i>
-          <h1>Gemini Deep Research</h1>
+          <h1>Gemini Deep Research Agent</h1>
         </div>
         <div class="header-actions">
           <span class="model-badge">
@@ -62,7 +62,7 @@
             <!-- Compact Options Row -->
             <div class="options-row">
               <div class="option-group">
-                <label><i class="fas fa-layer-group"></i> Depth</label>
+                <label><i class="fas fa-layer-group"></i> Depth of research</label>
                 <select id="depthSelect">
                   <option value="quick">Quick</option>
                   <option value="standard">Standard</option>
@@ -71,7 +71,16 @@
                 </select>
               </div>
               <div class="option-group">
-                <label><i class="fas fa-file-alt"></i> Format</label>
+                <label><i class="fas fa-globe"></i> Search Sources</label>
+                <select id="sourcesSelect">
+                  <option value="all" selected>All</option>
+                  <option value="web">Web</option>
+                  <option value="academic">Academic</option>
+                  <option value="news">News</option>
+                </select>
+              </div>
+              <div class="option-group">
+                <label><i class="fas fa-file-alt"></i> Output Format</label>
                 <select id="formatSelect">
                   <option value="summary">Summary</option>
                   <option value="detailed">Detailed</option>
@@ -79,14 +88,11 @@
                   <option value="json">JSON</option>
                 </select>
               </div>
-              <div class="option-group">
-                <label><i class="fas fa-globe"></i> Sources</label>
-                <select id="sourcesSelect">
-                  <option value="all" selected>All</option>
-                  <option value="web">Web</option>
-                  <option value="academic">Academic</option>
-                  <option value="news">News</option>
-                </select>
+              <div class="option-group checkbox-group">
+                <label>
+                  <input type="checkbox" id="deepThinkCheck">
+                  <span><i class="fas fa-brain"></i> Refine with Deep Think</span>
+                </label>
               </div>
             </div>
 

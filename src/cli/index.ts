@@ -35,6 +35,7 @@ program
   .option('-o, --output <file>', 'Save output to a file')
   .option('-c, --citations', 'Include citations in output', false)
   .option('-s, --sources <type>', 'Source types: web, academic, news, all', 'all')
+  .option('--think', 'Refine output with Gemini Deep Think', false)
   .option('--no-progress', 'Disable progress output')
   .action(researchCommand);
 

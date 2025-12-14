@@ -19,6 +19,7 @@ interface ResearchOptions {
   citations: boolean;
   sources: string;
   progress: boolean;
+  think: boolean;
 }
 
 export async function researchCommand(query: string, options: ResearchOptions): Promise<void> {
@@ -102,6 +103,7 @@ export async function researchCommand(query: string, options: ResearchOptions): 
           outputFormat: options.format as OutputFormat,
           sources: options.sources as SourceType,
           includeCitations: options.citations,
+          refineWithThinking: options.think,
         },
       },
       options.progress ? createProgressHandler() : undefined

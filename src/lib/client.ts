@@ -14,6 +14,8 @@ import {
   FileUploadResult,
   ApiResponse,
   ErrorInfo,
+  GenerateContentRequest,
+  GenerateContentResponse,
 } from './types.js';
 
 // Try alpha first for Interactions API, fall back to beta for standard API
@@ -201,6 +203,27 @@ export class GeminiClient {
       success: false,
       error: { code: 'TIMEOUT', message: 'Interaction did not complete in time' },
     };
+  }
+
+  // ============================================
+  // Standard Generation (Thinking Models)
+  // ============================================
+
+  /**
+   * Generate content using standard Gemini API
+   */
+  async generateContent(request: GenerateContentRequest): Promise<ApiResponse<GenerateContentResponse>> {
+    const modelId = request.model.startsWith('models/') ? request.model : `models/${request.model}`;
+    const endpoint = `/${modelId}:generateContent`;
+    
+    const body = {
+      contents: Array.isArray(request.contents) ? request.contents : [request.contents],
+      generationConfig: request.generationConfig,
+    };
+
+    console.log('[GeminiClient] Generating content with model:', modelId);
+    
+    return this.request<GenerateContentResponse>('POST', endpoint, body);
   }
 
   // ============================================

@@ -26,6 +26,7 @@ class DeepResearchApp {
     this.depthSelect = document.getElementById('depthSelect');
     this.formatSelect = document.getElementById('formatSelect');
     this.sourcesSelect = document.getElementById('sourcesSelect');
+    this.deepThinkCheck = document.getElementById('deepThinkCheck');
     
     this.dropZone = document.getElementById('dropZone');
     this.fileInput = document.getElementById('fileInput');
@@ -206,6 +207,7 @@ class DeepResearchApp {
           outputFormat: this.formatSelect.value,
           sourceTypes: this.sourcesSelect.value,
           includeCitations: true, // Default to true since option removed from UI
+          refineWithThinking: this.deepThinkCheck ? this.deepThinkCheck.checked : false,
           documents: uploadedFiles
         })
       });
@@ -511,11 +513,14 @@ class DeepResearchApp {
 
     this.resultsList.innerHTML = this.researchHistory.map(result => `
       <div class="result-item ${this.activeResultId === result.id ? 'active' : ''}" data-result-id="${result.id}">
-        <div class="result-item-query">${this.escapeHtml(result.query)}</div>
-        <div class="result-item-meta">
-          <span>${new Date(result.timestamp).toLocaleDateString()}</span>
-          <span class="result-item-time">${result.totalTime ? result.totalTime.toFixed(1) + 's' : ''}</span>
+        <div class="result-item-content">
+          <div class="result-item-query">${this.escapeHtml(result.query)}</div>
+          <div class="result-item-meta">
+            <span>${new Date(result.timestamp).toLocaleDateString()}</span>
+            <span class="result-item-time">${result.totalTime ? result.totalTime.toFixed(1) + 's' : ''}</span>
+          </div>
         </div>
+        <button class="delete-result-btn" data-id="${result.id}" title="Delete"><i class="fas fa-trash"></i></button>
       </div>
     `).join('');
 
@@ -525,6 +530,28 @@ class DeepResearchApp {
         if (result) this.showResult(result);
       });
     });
+
+    this.resultsList.querySelectorAll('.delete-result-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteResult(btn.dataset.id);
+      });
+    });
+  }
+
+  deleteResult(id) {
+    if (confirm('Delete this research result?')) {
+      this.researchHistory = this.researchHistory.filter(r => r.id !== id);
+      localStorage.setItem('researchHistory', JSON.stringify(this.researchHistory));
+      
+      this.closeTab(id);
+      if (this.activeResultId === id) {
+        this.showNewResearchPanel();
+      }
+      
+      this.renderHistory();
+      this.showToast('Result deleted', 'success');
+    }
   }
 
   clearHistory() {

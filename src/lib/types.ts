@@ -57,6 +57,7 @@ export interface ResearchOptions {
   language?: string;
   includeImages?: boolean;
   includeCitations?: boolean;
+  refineWithThinking?: boolean;
 }
 
 export interface ResearchRequest {
@@ -231,6 +232,40 @@ export interface ResearchEvent {
 }
 
 export type ResearchEventCallback = (event: ResearchEvent) => void;
+
+// ============================================
+// Generate Content Types (Standard Gemini API)
+// ============================================
+
+export interface ThinkingConfig {
+  include_thoughts?: boolean;
+  thinking_budget?: number;
+  thinking_level?: "low" | "high";
+}
+
+export interface GenerateContentConfig {
+  thinking_config?: ThinkingConfig;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  maxOutputTokens?: number;
+}
+
+export interface GenerateContentRequest {
+  model: string;
+  contents: Content | Content[];
+  generationConfig?: GenerateContentConfig;
+}
+
+export interface GenerateContentResponse {
+  candidates: Candidate[];
+  usageMetadata?: any;
+}
+
+export interface Candidate {
+  content: Content;
+  finishReason?: string;
+}
 
 // ============================================
 // API Response Wrappers

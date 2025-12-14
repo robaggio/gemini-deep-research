@@ -16,6 +16,26 @@ deep-research-pro-preview-12-2025
 
 See: [Deep Research Documentation](https://ai.google.dev/gemini-api/docs/deep-research)
 
+## 🧠 Model Comparison: Deep Research vs Deep Think
+
+It's important to understand the distinction between Google's recent AI capabilities:
+
+### **Gemini Deep Research**
+This agent utilizes the **Deep Research** capability, which is an agentic workflow designed for comprehensive information gathering and synthesis.
+- **Focus**: External research, browsing, multi-step retrieval, and synthesizing logical reports from many sources.
+- **Capabilities**: Can use tools, browse the web, read uploaded documents, and iterate on findings.
+- **Best For**: Complex research questions, literature reviews, competitive analysis, and background briefings.
+- **Docs**: [Gemini Deep Research Documentation](https://ai.google.dev/gemini-api/docs/deep-research)
+
+### **Gemini Deep Think (Thinking Models)**
+Refers to models like **Gemini 2.0 Flash Thinking**, which employ "Chain of Thought" reasoning internally before answering.
+- **Focus**: Internal logic, reasoning, puzzles, mathematics, and code generation.
+- **Capabilities**: Generates a hidden "thinking process" to verify logic before outputting the final answer. It does not necessarily browse the web better, but it *reasons* better.
+- **Best For**: Complex logic problems, coding challenges, math, and ensuring reasoning accuracy.
+- **Docs**: [Gemini Thinking Models Documentation](https://ai.google.dev/gemini-api/docs/thinking)
+
+**This project uses the Deep Research capability** to act as an autonomous research assistant.
+
 ## ✨ Features
 
 - 🔍 **Deep Research**: Comprehensive AI-powered research using Gemini's Deep Research agent (`deep-research-pro-preview-12-2025`)

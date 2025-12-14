@@ -84,7 +84,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
     if (repoUrl && typeof repoUrl === 'string' && (repoUrl.startsWith('http') || repoUrl.startsWith('git'))) {
       try {
         const { loadDocumentsFromFolder } = await import('../../lib/index.js');
-        const { execSync } = await import('child_process');
+        const { simpleGit } = await import('simple-git');
         
         // Create temp dir
         const tempDir = path.join(process.cwd(), 'temp_repos', `repo-${Date.now()}`);
@@ -92,9 +92,10 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
           fs.mkdirSync(tempDir, { recursive: true });
         }
         
-        // Clone repo
+        // Clone repo using simple-git library
         console.log(`Cloning repo ${repoUrl} to ${tempDir}`);
-        execSync(`git clone --depth 1 ${repoUrl} ${tempDir}`, { stdio: 'ignore' });
+        const git = simpleGit();
+        await git.clone(repoUrl, tempDir, ['--depth', '1']);
         
         // Load documents
         const allowedExtensions = ['.ts', '.js', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.md', '.txt', '.json', '.xml', '.html', '.css', '.go', '.rs'];

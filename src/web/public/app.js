@@ -24,7 +24,6 @@ class DeepResearchApp {
   bindElements() {
     this.queryInput = document.getElementById('queryInput');
     this.depthSelect = document.getElementById('depthSelect');
-    this.formatSelect = document.getElementById('formatSelect');
     this.sourcesSelect = document.getElementById('sourcesSelect');
     this.deepThinkCheck = document.getElementById('deepThinkCheck');
     
@@ -282,7 +281,7 @@ class DeepResearchApp {
       const researchBody = {
         query,
         depth: this.depthSelect.value,
-        outputFormat: this.formatSelect.value,
+        outputFormat: 'markdown',
         sourceTypes: this.sourcesSelect.value,
         includeCitations: true,
         refineWithThinking: this.deepThinkCheck ? this.deepThinkCheck.checked : false,
@@ -370,7 +369,7 @@ class DeepResearchApp {
       timestamp: new Date().toISOString(),
       totalTime: totalTime,
       depth: this.depthSelect.value,
-      format: this.formatSelect.value
+      format: 'markdown'
     };
 
     this.researchHistory.unshift(resultEntry);

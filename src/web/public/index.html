@@ -80,15 +80,6 @@
                   <option value="news">News</option>
                 </select>
               </div>
-              <div class="option-group">
-                <label><i class="fas fa-file-alt"></i> Format</label>
-                <select id="formatSelect">
-                  <option value="summary">Summary</option>
-                  <option value="detailed">Detailed</option>
-                  <option value="markdown" selected>Markdown</option>
-                  <option value="json">JSON</option>
-                </select>
-              </div>
               <div class="option-group checkbox-group">
                 <label>
                   <input type="checkbox" id="deepThinkCheck">
@@ -119,8 +110,8 @@
             <!-- Progress (hidden by default) -->
             <div class="progress-section hidden" id="progressSection">
               <div class="progress-info">
-                <span id="progressStatus">Initializing...</span>
-                <span id="elapsedTime">0.0s</span>
+                <span><strong>Status:</strong> <span id="progressStatus">Initializing...</span></span>
+                <span><strong>Time:</strong> <span id="elapsedTime">0.0s</span></span>
               </div>
               <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar"></div>

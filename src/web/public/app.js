@@ -49,6 +49,7 @@ class DeepResearchApp {
     this.resultsList = document.getElementById('resultsList');
     this.clearHistoryBtn = document.getElementById('clearHistoryBtn');
     this.themeToggle = document.getElementById('themeToggle');
+    this.aboutBtn = document.getElementById('aboutBtn');
     this.zoomInBtn = document.getElementById('zoomInBtn');
     this.zoomOutBtn = document.getElementById('zoomOutBtn');
     this.zoomValue = document.getElementById('zoomValue');
@@ -70,6 +71,9 @@ class DeepResearchApp {
     // Theme toggle
     this.themeToggle.addEventListener('click', () => this.toggleTheme());
     
+    // About button
+    this.aboutBtn.addEventListener('click', () => this.openAboutTab());
+
     // Zoom controls
     this.zoomInBtn.addEventListener('click', () => this.adjustZoom(1));
     this.zoomOutBtn.addEventListener('click', () => this.adjustZoom(-1));
@@ -102,6 +106,70 @@ class DeepResearchApp {
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
+  }
+
+  openAboutTab() {
+    const tabId = 'about';
+    let existingTab = this.tabsContainer.querySelector(`[data-tab="${tabId}"]`);
+    
+    if (existingTab) {
+      this.activateTab(tabId);
+      return;
+    }
+
+    const tab = document.createElement('button');
+    tab.className = 'tab';
+    tab.dataset.tab = tabId;
+    tab.innerHTML = `
+      <i class="fas fa-info-circle"></i>
+      <span class="tab-title">About</span>
+      <span class="tab-close"><i class="fas fa-times"></i></span>
+    `;
+    
+    tab.addEventListener('click', () => this.activateTab(tabId));
+    tab.querySelector('.tab-title').addEventListener('click', (e) => { e.stopPropagation(); this.activateTab(tabId); });
+    tab.querySelector('.tab-close').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.closeTab(tabId);
+    });
+    
+    const panel = document.createElement('div');
+    panel.className = 'tab-panel result-panel';
+    panel.dataset.resultId = tabId;
+    
+    panel.innerHTML = `
+      <section class="results-section">
+        <div class="results-content" style="max-width: 800px; margin: 0 auto; padding-top: 1rem;">
+          <h1>🧠 Model Comparison: Deep Research vs Deep Think</h1>
+          <p>It's important to understand the distinction between Google's recent AI capabilities:</p>
+          
+          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini Deep Research</h2>
+          <p>This agent utilizes the <strong>Deep Research</strong> capability, which is an agentic workflow designed for comprehensive information gathering and synthesis.</p>
+          <ul>
+            <li><strong>Focus:</strong> External research, browsing, multi-step retrieval, and synthesizing logical reports from many sources.</li>
+            <li><strong>Capabilities:</strong> Can use tools, browse the web, read uploaded documents, and iterate on findings.</li>
+            <li><strong>Best For:</strong> Complex research questions, literature reviews, competitive analysis, and background briefings.</li>
+            <li><strong>Docs:</strong> <a href="https://ai.google.dev/gemini-api/docs/deep-research" target="_blank">Gemini Deep Research Documentation</a></li>
+          </ul>
+
+          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini Deep Think (Gemini 3)</h2>
+          <p>Refers to <strong>Gemini 3</strong> series models (e.g., Gemini 3 Pro), which employ advanced "Chain of Thought" reasoning internally before answering.</p>
+          <ul>
+            <li><strong>Focus:</strong> Internal logic, reasoning, puzzles, mathematics, and code generation.</li>
+            <li><strong>Capabilities:</strong> Generates a hidden "thinking process" to verify logic before outputting the final answer. It does not necessarily browse the web better, but it <em>reasons</em> better.</li>
+            <li><strong>Best For:</strong> Complex logic problems, coding challenges, math, and ensuring reasoning accuracy.</li>
+            <li><strong>Docs:</strong> <a href="https://ai.google.dev/gemini-api/docs/thinking" target="_blank">Gemini Thinking Models Documentation</a></li>
+          </ul>
+
+          <hr style="margin: 2em 0;">
+          <p><em>This project uses the Deep Research capability to act as an autonomous research assistant.</em></p>
+        </div>
+      </section>
+    `;
+    
+    this.resultPanelsContainer.appendChild(panel);
+    this.tabsContainer.appendChild(tab);
+    this.activateTab(tabId);
   }
 
   initZoom() {

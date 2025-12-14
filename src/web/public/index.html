@@ -60,10 +60,10 @@
               <textarea id="queryInput" placeholder="Enter your research query..." rows="5"></textarea>
             </div>
 
-            <!-- Compact Options Row -->
+            <!-- Compact Options Row with Upload -->
             <div class="options-row">
               <div class="option-group">
-                <label><i class="fas fa-layer-group"></i> Depth of research</label>
+                <label><i class="fas fa-layer-group"></i> Depth</label>
                 <select id="depthSelect">
                   <option value="quick">Quick</option>
                   <option value="standard">Standard</option>
@@ -72,7 +72,7 @@
                 </select>
               </div>
               <div class="option-group">
-                <label><i class="fas fa-globe"></i> Search Sources</label>
+                <label><i class="fas fa-globe"></i> Sources</label>
                 <select id="sourcesSelect">
                   <option value="all" selected>All</option>
                   <option value="web">Web</option>
@@ -81,7 +81,7 @@
                 </select>
               </div>
               <div class="option-group">
-                <label><i class="fas fa-file-alt"></i> Output Format</label>
+                <label><i class="fas fa-file-alt"></i> Format</label>
                 <select id="formatSelect">
                   <option value="summary">Summary</option>
                   <option value="detailed">Detailed</option>
@@ -92,25 +92,22 @@
               <div class="option-group checkbox-group">
                 <label>
                   <input type="checkbox" id="deepThinkCheck">
-                  <span><i class="fas fa-brain"></i> Refine with Deep Think</span>
+                  <span><i class="fas fa-brain"></i> Deep Think</span>
                 </label>
               </div>
-            </div>
-
-            <!-- Compact Upload -->
-            <div class="upload-row">
-              <div class="drop-zone" id="dropZone">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <span>Drop files here or</span>
-                <div class="drop-zone-actions">
-                  <button type="button" class="browse-btn" id="browseBtn">Browse</button>
-                  <button type="button" class="browse-btn folder-btn" id="browseFolderBtn">Folder</button>
+              <div class="option-group upload-group">
+                <label><i class="fas fa-cloud-upload-alt"></i> Files</label>
+                <div class="inline-upload" id="dropZone">
+                  <button type="button" class="browse-btn" id="browseBtn"><i class="fas fa-file"></i> Browse</button>
+                  <button type="button" class="browse-btn folder-btn" id="browseFolderBtn"><i class="fas fa-folder"></i> Folder</button>
                 </div>
                 <input type="file" id="fileInput" multiple hidden>
                 <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
               </div>
-              <div class="file-queue" id="fileQueue"></div>
             </div>
+
+            <!-- File Queue (only shows when files are selected) -->
+            <div class="file-queue" id="fileQueue"></div>
 
             <!-- Action Button -->
             <div class="action-row">

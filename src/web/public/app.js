@@ -35,13 +35,18 @@ class DeepResearchApp {
     this.browseFolderBtn = document.getElementById('browseFolderBtn');
       this.fileQueue = document.getElementById('fileQueue');
     
-    this.repoInputRow = document.createElement('div');
-    this.repoInputRow.className = 'form-row';
-    this.repoInputRow.innerHTML = `
-      <label><i class="fab fa-github"></i> Clone Repo (Optional)</label>
-      <input type="text" id="repoInput" placeholder="https://github.com/username/repo" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: 0.95rem; font-family: var(--font-main);">
-    `;
-    this.dropZone.parentNode.insertBefore(this.repoInputRow, this.dropZone);
+    // Create inline repo input in options row
+    const optionsRow = document.querySelector('.options-row');
+    if (optionsRow && !document.getElementById('repoGroup')) {
+      const repoGroup = document.createElement('div');
+      repoGroup.className = 'option-group';
+      repoGroup.id = 'repoGroup';
+      repoGroup.innerHTML = `
+        <label><i class="fab fa-github"></i> Clone Repo</label>
+        <input type="text" id="repoInput" placeholder="github.com/user/repo" style="padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 0.85rem; width: 160px;">
+      `;
+      optionsRow.insertBefore(repoGroup, optionsRow.querySelector('.checkbox-group'));
+    }
     this.repoInput = document.getElementById('repoInput');
 
     this.startResearchBtn = document.getElementById('startResearchBtn');

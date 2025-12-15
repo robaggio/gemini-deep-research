@@ -1,18 +1,19 @@
 /**
  * Deep Research Agent
  * High-level interface for conducting research using Gemini Deep Research
- * 
+ *
  * Based on: https://ai.google.dev/gemini-api/docs/deep-research
- * 
- * The Gemini Deep Research Agent autonomously plans, executes, and synthesizes 
- * multi-step research tasks. Powered by Gemini 3 Pro, it navigates complex 
- * information landscapes using web search and your own data to produce 
+ *
+ * The Gemini Deep Research Agent autonomously plans, executes, and synthesizes
+ * multi-step research tasks. Powered by Gemini 3 Pro, it navigates complex
+ * information landscapes using web search and your own data to produce
  * detailed, cited reports.
- * 
+ *
  * IMPORTANT: Deep Research is ONLY available through the Interactions API.
  * You cannot access it through generate_content.
  */
 
+import axios from 'axios';
 import { GeminiClient } from './client.js';
 import {
   GeminiConfig,
@@ -34,7 +35,7 @@ import {
 // Deep Research Pro Preview Agent
 // See: https://ai.google.dev/gemini-api/docs/deep-research
 const DEEP_RESEARCH_AGENT = 'deep-research-pro-preview-12-2025';
-const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1alpha';
+const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const POLL_INTERVAL = 10000; // 10 seconds as recommended by docs
 const MAX_RESEARCH_TIME = 60 * 60 * 1000; // 60 minutes max
 
@@ -91,8 +92,8 @@ export class DeepResearchAgent {
       this.emitEvent(onEvent, { type: 'progress', timestamp: new Date(), data: { progress: 5 } });
 
       // Create interaction with background=true (required for Deep Research)
-      // POST /v1alpha/interactions
-      const createUrl = `${API_BASE_URL}/interactions?key=${this.config.apiKey}`;
+      // POST /v1beta/interactions
+      const createUrl = `${API_BASE_URL}/interactions`;
       
       console.log('[DeepResearch] Creating interaction with background=true');
 
@@ -112,19 +113,20 @@ export class DeepResearchAgent {
 
       console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));
 
-      const createResponse = await fetch(createUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createBody),
+      const createResponse = await axios.post(createUrl, createBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.config.apiKey
+        },
+        timeout: 30000
       });
 
-      if (!createResponse.ok) {
-        const error = await createResponse.json().catch(() => ({}));
-        console.error('[DeepResearch] Create Interaction Error:', error);
-        throw new Error(error.error?.message || `API error: ${createResponse.status} ${createResponse.statusText}`);
+      if (createResponse.status < 200 || createResponse.status >= 300) {
+        console.error('[DeepResearch] Create Interaction Error:', createResponse.data);
+        throw new Error(createResponse.data?.error?.message || `API error: ${createResponse.status} ${createResponse.statusText}`);
       }
 
-      const interaction = await createResponse.json();
+      const interaction = createResponse.data;
       const interactionId = interaction.id || interaction.name;
       
       console.log('[DeepResearch] Interaction started:', interactionId);
@@ -254,7 +256,7 @@ ${content}`;
     startTime: number,
     onEvent?: ResearchEventCallback
   ): Promise<{ status: string; content: string; sources?: SourceInfo[]; error?: string }> {
-    const getUrl = `${API_BASE_URL}/interactions/${interactionId}?key=${this.config.apiKey}`;
+    const getUrl = `${API_BASE_URL}/interactions/${interactionId}`;
     let progressPercent = 10;
 
     while (Date.now() - startTime < MAX_RESEARCH_TIME) {
@@ -262,18 +264,20 @@ ${content}`;
       
       console.log('[DeepResearch] Polling for results...');
       
-      const response = await fetch(getUrl, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await axios.get(getUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.config.apiKey
+        },
+        timeout: 30000
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        console.error('[DeepResearch] Poll Error:', error);
-        throw new Error(error.error?.message || `Poll error: ${response.status}`);
+      if (response.status < 200 || response.status >= 300) {
+        console.error('[DeepResearch] Poll Error:', response.data);
+        throw new Error(response.data?.error?.message || `Poll error: ${response.status}`);
       }
 
-      const interaction = await response.json();
+      const interaction = response.data;
       const status = interaction.status || interaction.state;
       
       console.log('[DeepResearch] Status:', status);

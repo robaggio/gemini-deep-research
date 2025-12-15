@@ -3,6 +3,8 @@
  * Low-level client for communicating with the Gemini Interactions API
  */
 
+import axios from 'axios';
+
 import {
   GeminiConfig,
   Session,
@@ -18,8 +20,8 @@ import {
   GenerateContentResponse,
 } from './types.js';
 
-// Try alpha first for Interactions API, fall back to beta for standard API
-const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1alpha';
+// Use v1beta for Interactions API (confirmed working with curl)
+const DEFAULT_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const FALLBACK_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 const DEFAULT_TIMEOUT = 300000; // 5 minutes for long research tasks
 const POLL_INTERVAL = 2000; // 2 seconds
@@ -46,43 +48,36 @@ export class GeminiClient {
     endpoint: string,
     body?: unknown
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${endpoint}?key=${this.apiKey}`;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    const url = `${this.baseUrl}${endpoint}`;
 
     try {
-      const response = await fetch(url, {
+      const response = await axios.request<T>({
+        url,
         method,
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
         },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
+        data: body,
+        timeout: this.timeout,
       });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        return {
-          success: false,
-          error: {
-            code: `HTTP_${response.status}`,
-            message: errorData.error?.message || response.statusText,
-          },
-        };
-      }
-
-      const data = await response.json();
-      return { success: true, data };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      if (error instanceof Error && error.name === 'AbortError') {
+      return { success: true, data: response.data };
+    } catch (error: any) {
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         return {
           success: false,
           error: { code: 'TIMEOUT', message: 'Request timed out' },
+        };
+      }
+
+      if (error.response) {
+        return {
+          success: false,
+          error: {
+            code: `HTTP_${error.response.status}`,
+            message: error.response.data?.error?.message || error.response.statusText,
+          },
         };
       }
 
@@ -90,7 +85,7 @@ export class GeminiClient {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: error.message || 'Unknown error',
         },
       };
     }
@@ -131,7 +126,7 @@ export class GeminiClient {
     const params: string[] = [];
     if (pageSize) params.push(`pageSize=${pageSize}`);
     if (pageToken) params.push(`pageToken=${pageToken}`);
-    if (params.length > 0) endpoint += `&${params.join('&')}`;
+    if (params.length > 0) endpoint += `?${params.join('&')}`;
     
     return this.request('GET', endpoint);
   }
@@ -238,7 +233,7 @@ export class GeminiClient {
     mimeType: string,
     displayName: string
   ): Promise<ApiResponse<FileUploadResult>> {
-    const url = `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/upload/v1beta/files`;
     
     // Convert to base64 if Buffer
     const base64Content = Buffer.isBuffer(fileContent) 
@@ -253,24 +248,24 @@ export class GeminiClient {
 
     try {
       // First, initiate the upload
-      const initResponse = await fetch(url, {
-        method: 'POST',
+      const initResponse = await axios.post(url, metadata, {
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': this.apiKey,
           'X-Goog-Upload-Protocol': 'resumable',
           'X-Goog-Upload-Command': 'start',
           'X-Goog-Upload-Header-Content-Length': String(Buffer.byteLength(base64Content, 'base64')),
           'X-Goog-Upload-Header-Content-Type': mimeType,
         },
-        body: JSON.stringify(metadata),
+        timeout: this.timeout,
       });
 
-      if (!initResponse.ok) {
+      if (initResponse.status < 200 || initResponse.status >= 300) {
         // Try simple upload instead
         return this.simpleUpload(fileContent, mimeType, displayName);
       }
 
-      const uploadUrl = initResponse.headers.get('X-Goog-Upload-URL');
+      const uploadUrl = initResponse.headers['x-goog-upload-url'];
       
       if (!uploadUrl) {
         return this.simpleUpload(fileContent, mimeType, displayName);
@@ -278,29 +273,26 @@ export class GeminiClient {
 
       // Upload the actual content
       const bodyContent = Buffer.isBuffer(fileContent) ? new Uint8Array(fileContent) : new Uint8Array(Buffer.from(fileContent));
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
+      const uploadResponse = await axios.put(uploadUrl, bodyContent, {
         headers: {
           'Content-Type': mimeType,
           'X-Goog-Upload-Command': 'upload, finalize',
           'X-Goog-Upload-Offset': '0',
         },
-        body: bodyContent,
+        timeout: this.timeout,
       });
 
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({}));
+      if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
         return {
           success: false,
           error: {
             code: `HTTP_${uploadResponse.status}`,
-            message: errorData.error?.message || uploadResponse.statusText,
+            message: uploadResponse.data?.error?.message || uploadResponse.statusText,
           },
         };
       }
 
-      const data = await uploadResponse.json();
-      return { success: true, data: data.file };
+      return { success: true, data: uploadResponse.data.file };
     } catch (error) {
       return {
         success: false,
@@ -320,9 +312,7 @@ export class GeminiClient {
     mimeType: string,
     displayName: string
   ): Promise<ApiResponse<FileUploadResult>> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/files?key=${this.apiKey}`;
-    
-    const base64Content = Buffer.isBuffer(fileContent) 
+    const base64Content = Buffer.isBuffer(fileContent)
       ? fileContent.toString('base64')
       : Buffer.from(fileContent).toString('base64');
 
@@ -362,7 +352,7 @@ export class GeminiClient {
     const params: string[] = [];
     if (pageSize) params.push(`pageSize=${pageSize}`);
     if (pageToken) params.push(`pageToken=${pageToken}`);
-    if (params.length > 0) endpoint += `&${params.join('&')}`;
+    if (params.length > 0) endpoint += `?${params.join('&')}`;
     
     return this.request('GET', endpoint);
   }

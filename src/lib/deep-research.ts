@@ -397,6 +397,9 @@ ${content}`;
       input += '\n\nProvide the response in valid JSON format with sections: summary, findings, sources, and conclusions.';
     }
 
+    // Chinese
+    input += '请用简体中文输出。';
+
     // Add citation instructions
     if (options.includeCitations) {
       input += '\n\nInclude citations for all factual claims and reference sources clearly.';

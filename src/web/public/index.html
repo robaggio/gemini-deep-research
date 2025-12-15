@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemini Deep Research Agent</title>
+  <title>HIKE Deep Research</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,21 +13,21 @@
     <header class="header">
       <div class="header-content">
         <div class="logo">
-          <i class="fas fa-microscope"></i>
-          <h1>Gemini Deep Research Agent</h1>
+          <i></i>
+          <h1>HIKE Deep Research</h1>
         </div>
         <div class="header-actions">
           <span class="model-badge">
             <i class="fas fa-brain"></i>
-            deep-research-pro
+            gemini-deep-research-pro
           </span>
-          <button class="about-btn" id="aboutBtn" title="About"><i class="fas fa-info-circle"></i></button>
+          <button class="about-btn" id="aboutBtn" title="关于"><i class="fas fa-info-circle"></i></button>
           <div class="zoom-controls">
-            <button class="zoom-btn" id="zoomOutBtn" title="Decrease size"><i class="fas fa-minus"></i></button>
+            <button class="zoom-btn" id="zoomOutBtn" title="减小字体"><i class="fas fa-minus"></i></button>
             <span class="zoom-value" id="zoomValue">16px</span>
-            <button class="zoom-btn" id="zoomInBtn" title="Increase size"><i class="fas fa-plus"></i></button>
+            <button class="zoom-btn" id="zoomInBtn" title="增大字体"><i class="fas fa-plus"></i></button>
           </div>
-          <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+          <button class="theme-toggle" id="themeToggle" title="切换主题">
             <i class="fas fa-sun"></i>
             <i class="fas fa-moon"></i>
           </button>
@@ -43,10 +43,10 @@
         <div class="tabs-bar">
           <div class="tabs-container" id="tabsContainer">
             <button class="tab active" data-tab="new">
-              <i class="fas fa-plus"></i> <span>New Research</span>
+              <i class="fas fa-plus"></i> <span>新建研究</span>
             </button>
           </div>
-          <button class="add-tab-btn" id="addTabBtn" title="New Research">
+          <button class="add-tab-btn" id="addTabBtn" title="新建研究">
             <i class="fas fa-plus"></i>
           </button>
         </div>
@@ -56,41 +56,41 @@
           <div class="tab-panel active" id="newResearchPanel">
             <!-- Query Input -->
             <div class="form-row">
-              <label><i class="fas fa-search"></i> Research Query</label>
-              <textarea id="queryInput" placeholder="Enter your research query..." rows="5"></textarea>
+              <label><i class="fas fa-search"></i> 研究问题</label>
+              <textarea id="queryInput" placeholder="请输入您的研究问题，研究时间3分钟起，请耐心等待" rows="5"></textarea>
             </div>
 
             <!-- Compact Options Row with Upload -->
             <div class="options-row">
               <div class="option-group">
-                <label><i class="fas fa-layer-group"></i> Depth</label>
+                <label><i class="fas fa-layer-group"></i> 研究深度</label>
                 <select id="depthSelect">
-                  <option value="quick">Quick</option>
-                  <option value="standard">Standard</option>
-                  <option value="deep" selected>Deep</option>
-                  <option value="maximum">Maximum</option>
+                  <option value="quick">快速</option>
+                  <option value="standard">标准</option>
+                  <option value="deep" selected>深度</option>
+                  <option value="maximum">最大</option>
                 </select>
               </div>
               <div class="option-group">
-                <label><i class="fas fa-globe"></i> Sources</label>
+                <label><i class="fas fa-globe"></i> 信息来源</label>
                 <select id="sourcesSelect">
-                  <option value="all" selected>All</option>
-                  <option value="web">Web</option>
-                  <option value="academic">Academic</option>
-                  <option value="news">News</option>
+                  <option value="all" selected>全部</option>
+                  <option value="web">网络</option>
+                  <option value="academic">学术</option>
+                  <option value="news">新闻</option>
                 </select>
               </div>
               <div class="option-group checkbox-group">
                 <label>
                   <input type="checkbox" id="deepThinkCheck">
-                  <span><i class="fas fa-brain"></i> Deep Think</span>
+                  <span><i class="fas fa-brain"></i> 深度思考</span>
                 </label>
               </div>
               <div class="option-group upload-group">
-                <label><i class="fas fa-cloud-upload-alt"></i> Files</label>
+                <label><i class="fas fa-cloud-upload-alt"></i> 文件</label>
                 <div class="inline-upload" id="dropZone">
-                  <button type="button" class="browse-btn" id="browseBtn"><i class="fas fa-file"></i> Browse</button>
-                  <button type="button" class="browse-btn folder-btn" id="browseFolderBtn"><i class="fas fa-folder"></i> Folder</button>
+                  <button type="button" class="browse-btn" id="browseBtn"><i class="fas fa-file"></i> 选择文件</button>
+                  <button type="button" class="browse-btn folder-btn" id="browseFolderBtn"><i class="fas fa-folder"></i> 选择文件夹</button>
                 </div>
                 <input type="file" id="fileInput" multiple hidden>
                 <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
@@ -103,15 +103,15 @@
             <!-- Action Button -->
             <div class="action-row">
               <button class="research-btn" id="startResearchBtn">
-                <i class="fas fa-rocket"></i> Start Research
+                <i class="fas fa-rocket"></i> 开始研究
               </button>
             </div>
 
             <!-- Progress (hidden by default) -->
             <div class="progress-section hidden" id="progressSection">
               <div class="progress-info">
-                <span><strong>Status:</strong> <span id="progressStatus">Initializing...</span></span>
-                <span><strong>Time:</strong> <span id="elapsedTime">0.0s</span></span>
+                <span><strong>状态:</strong> <span id="progressStatus">初始化中...</span></span>
+                <span><strong>时间:</strong> <span id="elapsedTime">0.0秒</span></span>
               </div>
               <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar"></div>
@@ -127,8 +127,8 @@
       <!-- Right Panel - History -->
       <aside class="history-panel" id="historyPanel">
         <div class="history-header">
-          <h3><i class="fas fa-history"></i> History</h3>
-          <button class="clear-btn" id="clearHistoryBtn" title="Clear"><i class="fas fa-trash"></i></button>
+          <h3><i class="fas fa-history"></i> 历史记录</h3>
+          <button class="clear-btn" id="clearHistoryBtn" title="清空"><i class="fas fa-trash"></i></button>
         </div>
         <div class="history-list" id="resultsList"></div>
       </aside>

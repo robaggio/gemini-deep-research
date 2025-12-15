@@ -121,7 +121,7 @@ class DeepResearchApp {
     tab.dataset.tab = tabId;
     tab.innerHTML = `
       <i class="fas fa-info-circle"></i>
-      <span class="tab-title">About</span>
+      <span class="tab-title">关于</span>
       <span class="tab-close"><i class="fas fa-times"></i></span>
     `;
     
@@ -139,75 +139,75 @@ class DeepResearchApp {
     panel.innerHTML = `
       <section class="results-section">
         <div class="results-content" style="max-width: 800px; margin: 0 auto; padding-top: 1rem;">
-          <h2 style="color: var(--primary); margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">✨ Features</h2>
+          <h2 style="color: var(--primary); margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">✨ 功能特性</h2>
           <ul style="list-style-type: none; padding-left: 0;">
-            <li>🔍 <strong>Deep Research:</strong> Comprehensive AI-powered research using Gemini's Deep Research agent (<code>deep-research-pro-preview-12-2025</code>)</li>
-            <li>📁 <strong>Multi-Document Upload:</strong> Upload multiple files or entire folders for context</li>
-            <li>🎚️ <strong>Configurable Depth:</strong> Quick, Standard, Deep, or Maximum research depth</li>
-            <li>📊 <strong>Multiple Output Formats:</strong> Summary, Detailed, Markdown, or JSON</li>
-            <li>🌐 <strong>Web Interface:</strong> Modern, responsive UI for browser-based research</li>
-            <li>💻 <strong>CLI Tool:</strong> Powerful command-line interface for scripting and automation</li>
-            <li>📚 <strong>Library Module:</strong> Import into your own Node.js projects</li>
-            <li>⚡ <strong>Background Processing:</strong> Long-running research with progress tracking</li>
-            <li>🔗 <strong>GitHub Repo Clone:</strong> Paste GitHub URLs in the query - repos are auto-cloned and analyzed</li>
+            <li>🔍 <strong>深度研究:</strong> 使用Gemini深度研究代理进行全面AI驱动研究 (<code>deep-research-pro-preview-12-2025</code>)</li>
+            <li>📁 <strong>多文档上传:</strong> 上传多个文件或整个文件夹作为上下文</li>
+            <li>🎚️ <strong>可配置深度:</strong> 快速、标准、深度或最大研究深度</li>
+            <li>📊 <strong>多种输出格式:</strong> 摘要、详细、Markdown或JSON</li>
+            <li>🌐 <strong>Web界面:</strong> 现代响应式浏览器研究界面</li>
+            <li>💻 <strong>CLI工具:</strong> 强大的命令行界面，支持脚本和自动化</li>
+            <li>📚 <strong>库模块:</strong> 可导入到您自己的Node.js项目中</li>
+            <li>⚡ <strong>后台处理:</strong> 长时间运行的研究，带进度跟踪</li>
+            <li>🔗 <strong>GitHub仓库克隆:</strong> 在查询中粘贴GitHub URL - 自动克隆并分析仓库</li>
           </ul>
 
-          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">🎚️ Research Depth Options</h2>
+          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">🎚️ 研究深度选项</h2>
           <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
             <thead>
               <tr style="border-bottom: 2px solid var(--border);">
-                <th style="text-align: left; padding: 0.5rem;">Depth</th>
-                <th style="text-align: left; padding: 0.5rem;">Description</th>
-                <th style="text-align: left; padding: 0.5rem;">Best For</th>
+                <th style="text-align: left; padding: 0.5rem;">深度</th>
+                <th style="text-align: left; padding: 0.5rem;">描述</th>
+                <th style="text-align: left; padding: 0.5rem;">适用场景</th>
               </tr>
             </thead>
             <tbody>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.5rem;"><strong>Quick</strong></td>
-                <td style="padding: 0.5rem;">Fast overview with basic analysis. Minimal web browsing.</td>
-                <td style="padding: 0.5rem;">Simple questions, quick facts, definitions</td>
+                <td style="padding: 0.5rem;"><strong>快速</strong></td>
+                <td style="padding: 0.5rem;">快速概览与基础分析。最少网络浏览。</td>
+                <td style="padding: 0.5rem;">简单问题、快速事实、定义查询</td>
               </tr>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.5rem;"><strong>Standard</strong></td>
-                <td style="padding: 0.5rem;">Balanced depth and speed. Moderate sources consulted.</td>
-                <td style="padding: 0.5rem;">General research, background information</td>
+                <td style="padding: 0.5rem;"><strong>标准</strong></td>
+                <td style="padding: 0.5rem;">平衡深度与速度。适中的信息源。</td>
+                <td style="padding: 0.5rem;">一般研究、背景信息收集</td>
               </tr>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.5rem;"><strong>Deep</strong></td>
-                <td style="padding: 0.5rem;">Thorough multi-step research. Multiple perspectives explored.</td>
-                <td style="padding: 0.5rem;">Detailed analysis, comparisons, technical topics</td>
+                <td style="padding: 0.5rem;"><strong>深度</strong></td>
+                <td style="padding: 0.5rem;">彻底的多步骤研究。探索多种视角。</td>
+                <td style="padding: 0.5rem;">详细分析、对比研究、技术主题</td>
               </tr>
               <tr>
-                <td style="padding: 0.5rem;"><strong>Maximum</strong></td>
-                <td style="padding: 0.5rem;">Exhaustive research. All available sources, comprehensive citations.</td>
-                <td style="padding: 0.5rem;">Academic research, complex topics, literature reviews</td>
+                <td style="padding: 0.5rem;"><strong>最大</strong></td>
+                <td style="padding: 0.5rem;">全面的研究。所有可用信息源，完整引用。</td>
+                <td style="padding: 0.5rem;">学术研究、复杂主题、文献综述</td>
               </tr>
             </tbody>
           </table>
 
-          <h1 style="margin-top: 2em;">🧠 Model Comparison: Deep Research vs Deep Think</h1>
-          <p>It's important to understand the distinction between Google's recent AI capabilities:</p>
-          
-          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini Deep Research (Gemini 3)</h2>
-          <p>This agent utilizes the <strong>Deep Research</strong> capability, which is an agentic workflow designed for comprehensive information gathering and synthesis.</p>
+          <h1 style="margin-top: 2em;">🧠 模型对比：深度研究 vs 深度思考</h1>
+          <p>理解Google近期AI能力的区别很重要：</p>
+
+          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini 深度研究 (Gemini 3)</h2>
+          <p>此代理利用<strong>深度研究</strong>能力，这是一个为全面信息收集和综合而设计的代理工作流。</p>
           <ul>
-            <li><strong>Focus:</strong> External research, browsing, multi-step retrieval, and synthesizing logical reports from many sources.</li>
-            <li><strong>Capabilities:</strong> Can use tools, browse the web, read uploaded documents, and iterate on findings.</li>
-            <li><strong>Best For:</strong> Complex research questions, literature reviews, competitive analysis, and background briefings.</li>
-            <li><strong>Docs:</strong> <a href="https://ai.google.dev/gemini-api/docs/deep-research" target="_blank">Gemini Deep Research Documentation</a></li>
+            <li><strong>焦点:</strong> 外部研究、浏览、多步骤检索，以及从多个来源综合逻辑报告。</li>
+            <li><strong>能力:</strong> 可以使用工具、浏览网页、阅读上传的文档，并对发现进行迭代。</li>
+            <li><strong>最适合:</strong> 复杂研究问题、文献综述、竞争分析和背景简报。</li>
+            <li><strong>文档:</strong> <a href="https://ai.google.dev/gemini-api/docs/deep-research" target="_blank">Gemini 深度研究文档</a></li>
           </ul>
 
-          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini Deep Think (Gemini 3)</h2>
-          <p>Refers to <strong>Gemini 3</strong> series models (e.g., Gemini 3 Pro), which employ advanced "Chain of Thought" reasoning internally before answering.</p>
+          <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">Gemini 深度思考 (Gemini 3)</h2>
+          <p>指<strong>Gemini 3</strong>系列模型（如Gemini 3 Pro），在回答前内部采用高级"思维链"推理。</p>
           <ul>
-            <li><strong>Focus:</strong> Internal logic, reasoning, puzzles, mathematics, and code generation.</li>
-            <li><strong>Capabilities:</strong> Generates a hidden "thinking process" to verify logic before outputting the final answer. It does not necessarily browse the web better, but it <em>reasons</em> better.</li>
-            <li><strong>Best For:</strong> Complex logic problems, coding challenges, math, and ensuring reasoning accuracy.</li>
-            <li><strong>Docs:</strong> <a href="https://ai.google.dev/gemini-api/docs/thinking" target="_blank">Gemini Thinking Models Documentation</a></li>
+            <li><strong>焦点:</strong> 内部逻辑、推理、谜题、数学和代码生成。</li>
+            <li><strong>能力:</strong> 生成隐藏的"思考过程"来验证逻辑，然后输出最终答案。它不一定能更好地浏览网页，但它能更好地<em>推理</em>。</li>
+            <li><strong>最适合:</strong> 复杂逻辑问题、编程挑战、数学和确保推理准确性。</li>
+            <li><strong>文档:</strong> <a href="https://ai.google.dev/gemini-api/docs/thinking" target="_blank">Gemini 思考模型文档</a></li>
           </ul>
 
           <hr style="margin: 2em 0;">
-          <p><em>This project uses the Deep Research capability to act as an autonomous research assistant.</em></p>
+          <p><em>本项目使用深度研究能力作为自主研究助手。</em></p>
         </div>
       </section>
     `;
@@ -279,7 +279,7 @@ class DeepResearchApp {
   async startResearch() {
     const query = this.queryInput.value.trim();
     if (!query) {
-      this.showToast('Please enter a research query', 'error');
+      this.showToast('请输入研究查询内容', 'error');
       return;
     }
 
@@ -287,7 +287,7 @@ class DeepResearchApp {
     this.startResearchBtn.disabled = true;
     this.progressSection.classList.remove('hidden');
     this.progressBar.style.width = '0%';
-    this.progressStatus.textContent = 'Starting...';
+    this.progressStatus.textContent = '启动中...';
     
     this.startTime = Date.now();
     this.elapsedTimer = setInterval(() => this.updateElapsedTime(), 100);
@@ -295,7 +295,7 @@ class DeepResearchApp {
     try {
       let uploadedFiles = [];
       if (this.files.length > 0) {
-        this.progressStatus.textContent = 'Uploading...';
+        this.progressStatus.textContent = '上传中...';
         this.progressBar.style.width = '10%';
         
         const formData = new FormData();
@@ -308,7 +308,7 @@ class DeepResearchApp {
         }
       }
 
-      this.progressStatus.textContent = 'Researching...';
+      this.progressStatus.textContent = '研究中...';
       this.progressBar.style.width = '20%';
 
       const researchBody = {
@@ -337,7 +337,7 @@ class DeepResearchApp {
 
     } catch (error) {
       console.error('Research error:', error);
-      this.showToast('Research failed: ' + error.message, 'error');
+      this.showToast('研究失败: ' + error.message, 'error');
       this.resetResearchUI();
     }
   }
@@ -413,7 +413,7 @@ class DeepResearchApp {
     this.showResult(resultEntry);
     
     setTimeout(() => this.resetResearchUI(), 500);
-    this.showToast('Research completed!', 'success');
+    this.showToast('研究完成！', 'success');
   }
 
   resetResearchUI() {
@@ -436,7 +436,7 @@ class DeepResearchApp {
     tab.dataset.tab = tabId;
     tab.innerHTML = `
       <i class="fas fa-plus"></i>
-      <span class="tab-title">New Research</span>
+      <span class="tab-title">新建研究</span>
       <span class="tab-close"><i class="fas fa-times"></i></span>
     `;
     
@@ -463,7 +463,7 @@ class DeepResearchApp {
     document.querySelectorAll('.result-panel, .tab-panel').forEach(p => p.classList.remove('active'));
     panel.classList.add('active');
     
-    this.showToast('New research tab created', 'success');
+    this.showToast('新建研究标签页已创建', 'success');
   }
 
   showNewResearchPanel() {
@@ -635,7 +635,7 @@ class DeepResearchApp {
             <span class="result-item-time">${result.totalTime ? result.totalTime.toFixed(1) + 's' : ''}</span>
           </div>
         </div>
-        <button class="delete-result-btn" data-id="${result.id}" title="Delete"><i class="fas fa-trash"></i></button>
+        <button class="delete-result-btn" data-id="${result.id}" title="删除"><i class="fas fa-trash"></i></button>
       </div>
     `).join('');
 
@@ -655,7 +655,7 @@ class DeepResearchApp {
   }
 
   async deleteResult(id) {
-    if (confirm('Delete this research result?')) {
+    if (confirm('确定要删除这个研究结果吗？')) {
       // Delete on server
       try {
         await fetch(`/api/research/${id}`, { method: 'DELETE' });
@@ -673,12 +673,12 @@ class DeepResearchApp {
       }
       
       this.renderHistory();
-      this.showToast('Result deleted', 'success');
+      this.showToast('研究结果已删除', 'success');
     }
   }
 
   clearHistory() {
-    if (confirm('Clear all history?')) {
+    if (confirm('确定要清空所有历史记录吗？')) {
       this.researchHistory = [];
       localStorage.removeItem('researchHistory');
       this.renderHistory();
@@ -688,7 +688,7 @@ class DeepResearchApp {
       this.resultPanelsContainer.innerHTML = '';
       this.showNewResearchPanel();
       
-      this.showToast('History cleared', 'success');
+      this.showToast('历史记录已清空', 'success');
     }
   }
 
@@ -696,7 +696,7 @@ class DeepResearchApp {
   saveAs(resultId, format) {
     const result = this.researchHistory.find(r => r.id === resultId);
     if (!result) {
-      this.showToast('Result not found', 'error');
+      this.showToast('未找到研究结果', 'error');
       return;
     }
 
@@ -712,13 +712,13 @@ class DeepResearchApp {
       this.savePDF(result, filename);
     }
 
-    this.showToast(`Saved as ${format.toUpperCase()}`, 'success');
+    this.showToast(`已保存为 ${format.toUpperCase()} 格式`, 'success');
   }
 
   savePDF(result, filename) {
     const contentEl = document.getElementById(`content-${result.id}`);
     if (!contentEl || typeof html2pdf === 'undefined') {
-      this.showToast('PDF not available', 'error');
+      this.showToast('PDF导出功能不可用', 'error');
       return;
     }
 

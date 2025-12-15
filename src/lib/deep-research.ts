@@ -113,6 +113,13 @@ export class DeepResearchAgent {
 
       console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));
 
+      console.log('[DeepResearch] Request URL:', createUrl);
+      console.log('[DeepResearch] Request Headers:', {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': this.config.apiKey ? this.config.apiKey.substring(0, 10) + '***' : 'MISSING'
+      });
+      console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
+
       const createResponse = await axios.post(createUrl, createBody, {
         headers: {
           'Content-Type': 'application/json',
@@ -121,8 +128,18 @@ export class DeepResearchAgent {
         timeout: 30000
       });
 
+      console.log('[DeepResearch] Response Status:', createResponse.status);
+      console.log('[DeepResearch] Response Headers:', createResponse.headers);
+      console.log('[DeepResearch] Response Data:', JSON.stringify(createResponse.data, null, 2));
+
       if (createResponse.status < 200 || createResponse.status >= 300) {
         console.error('[DeepResearch] Create Interaction Error:', createResponse.data);
+        console.error('[DeepResearch] Full Error Response:', {
+          status: createResponse.status,
+          statusText: createResponse.statusText,
+          data: createResponse.data,
+          headers: createResponse.headers
+        });
         throw new Error(createResponse.data?.error?.message || `API error: ${createResponse.status} ${createResponse.statusText}`);
       }
 
@@ -180,10 +197,33 @@ export class DeepResearchAgent {
         completedAt: new Date(),
         error: result.error,
       };
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[DeepResearch] Error:', errorMessage);
-      
+
+      // Log detailed error information
+      if (error.response) {
+        console.error('[DeepResearch] HTTP Error Details:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers,
+          url: error.config?.url,
+          method: error.config?.method
+        });
+      } else if (error.request) {
+        console.error('[DeepResearch] Network Error Details:', {
+          message: error.message,
+          code: error.code,
+          errno: error.errno,
+          syscall: error.syscall,
+          address: error.address,
+          port: error.port
+        });
+      } else {
+        console.error('[DeepResearch] Error Stack:', error.stack);
+      }
+
       this.emitEvent(onEvent, { type: 'error', timestamp: new Date(), data: { error: errorMessage } });
       return {
         id: resultId,
@@ -264,6 +304,7 @@ ${content}`;
       
       console.log('[DeepResearch] Polling for results...');
       
+      console.log('[DeepResearch] Polling URL:', getUrl);
       const response = await axios.get(getUrl, {
         headers: {
           'Content-Type': 'application/json',
@@ -272,8 +313,17 @@ ${content}`;
         timeout: 30000
       });
 
+      console.log('[DeepResearch] Poll Response Status:', response.status);
+      console.log('[DeepResearch] Poll Response Data:', JSON.stringify(response.data, null, 2));
+
       if (response.status < 200 || response.status >= 300) {
         console.error('[DeepResearch] Poll Error:', response.data);
+        console.error('[DeepResearch] Full Poll Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.data,
+          headers: response.headers
+        });
         throw new Error(response.data?.error?.message || `Poll error: ${response.status}`);
       }
 

@@ -60,6 +60,17 @@ const researchResults = new Map<string, ResearchResult>();
  */
 router.post('/research', upload.array('files', 20), async (req: Request, res: Response) => {
   try {
+    // Log environment information for debugging
+    console.log('[API] Environment Info:', {
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      hasApiKey: !!process.env.GEMINI_API_KEY,
+      apiKeyPrefix: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) + '***' : 'MISSING',
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({

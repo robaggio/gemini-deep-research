@@ -50,6 +50,16 @@ export class GeminiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
+    // Log request details (without exposing API key)
+    console.log('[GeminiClient] Request:', {
+      method,
+      url,
+      hasApiKey: !!this.apiKey,
+      apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + '***' : 'MISSING',
+      hasBody: !!body,
+      bodyPreview: body ? JSON.stringify(body).substring(0, 200) + '...' : 'none'
+    });
+
     try {
       const response = await axios.request<T>({
         url,
@@ -62,8 +72,43 @@ export class GeminiClient {
         timeout: this.timeout,
       });
 
+      console.log('[GeminiClient] Response Success:', {
+        status: response.status,
+        statusText: response.statusText,
+        hasData: !!response.data,
+        dataPreview: response.data ? JSON.stringify(response.data).substring(0, 200) + '...' : 'none'
+      });
+
       return { success: true, data: response.data };
     } catch (error: any) {
+      console.error('[GeminiClient] Request Failed:', {
+        message: error.message,
+        code: error.code
+      });
+
+      // Log detailed error information
+      if (error.response) {
+        console.error('[GeminiClient] HTTP Error Details:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data,
+          headers: error.response.headers,
+          url: error.config?.url,
+          method: error.config?.method
+        });
+      } else if (error.request) {
+        console.error('[GeminiClient] Network Error Details:', {
+          message: error.message,
+          code: error.code,
+          errno: error.errno,
+          syscall: error.syscall,
+          address: error.address,
+          port: error.port
+        });
+      } else {
+        console.error('[GeminiClient] Error Stack:', error.stack);
+      }
+
       if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
         return {
           success: false,

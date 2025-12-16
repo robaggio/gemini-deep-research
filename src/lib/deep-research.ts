@@ -36,7 +36,7 @@ import {
 // See: https://ai.google.dev/gemini-api/docs/deep-research
 const DEEP_RESEARCH_AGENT = 'deep-research-pro-preview-12-2025';
 const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const POLL_INTERVAL = 10000; // 10 seconds as recommended by docs
+const POLL_INTERVAL = 20000; // 20 seconds as recommended by docs, we use 15 to reduce fatech requests
 const MAX_RESEARCH_TIME = 60 * 60 * 1000; // 60 minutes max
 
 export class DeepResearchAgent {
@@ -111,14 +111,14 @@ export class DeepResearchAgent {
         },
       };
 
-      console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));
+      // console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));
 
-      console.log('[DeepResearch] Request URL:', createUrl);
-      console.log('[DeepResearch] Request Headers:', {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': this.config.apiKey ? this.config.apiKey.substring(0, 10) + '***' : 'MISSING'
-      });
-      console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
+      // console.log('[DeepResearch] Request URL:', createUrl);
+      // console.log('[DeepResearch] Request Headers:', {
+      //   'Content-Type': 'application/json',
+      //   'x-goog-api-key': this.config.apiKey ? this.config.apiKey.substring(0, 10) + '***' : 'MISSING'
+      // });
+      // console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
 
       const createResponse = await axios.post(createUrl, createBody, {
         headers: {
@@ -128,9 +128,9 @@ export class DeepResearchAgent {
         timeout: 30000
       });
 
-      console.log('[DeepResearch] Response Status:', createResponse.status);
-      console.log('[DeepResearch] Response Headers:', createResponse.headers);
-      console.log('[DeepResearch] Response Data:', JSON.stringify(createResponse.data, null, 2));
+      // console.log('[DeepResearch] Response Status:', createResponse.status);
+      // console.log('[DeepResearch] Response Headers:', createResponse.headers);
+      // console.log('[DeepResearch] Response Data:', JSON.stringify(createResponse.data, null, 2));
 
       if (createResponse.status < 200 || createResponse.status >= 300) {
         console.error('[DeepResearch] Create Interaction Error:', createResponse.data);
@@ -316,6 +316,12 @@ ${content}`;
       console.log('[DeepResearch] Poll Response Status:', response.status);
       console.log('[DeepResearch] Poll Response Data:', JSON.stringify(response.data, null, 2));
 
+      // Handle 502 Bad Gateway errors by continuing to poll
+      if (response.status === 502) {
+        console.warn('[DeepResearch] Received 502 Bad Gateway, continuing to poll...');
+        continue; // Skip to next poll iteration
+      }
+      
       if (response.status < 200 || response.status >= 300) {
         console.error('[DeepResearch] Poll Error:', response.data);
         console.error('[DeepResearch] Full Poll Error Response:', {

@@ -36,7 +36,7 @@ import {
 // See: https://ai.google.dev/gemini-api/docs/deep-research
 const DEEP_RESEARCH_AGENT = 'deep-research-pro-preview-12-2025';
 const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const POLL_INTERVAL = 20000; // 20 seconds as recommended by docs, we use 15 to reduce fatech requests
+const POLL_INTERVAL = 20000; // 10 seconds as recommended by docs, we use 20 to reduce fatech requests
 const MAX_RESEARCH_TIME = 60 * 60 * 1000; // 60 minutes max
 
 export class DeepResearchAgent {

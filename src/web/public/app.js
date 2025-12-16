@@ -145,7 +145,7 @@ class DeepResearchApp {
             <li>📁 <strong>多文档上传:</strong> 上传多个文件或整个文件夹作为上下文</li>
             <li>🎚️ <strong>可配置深度:</strong> 快速、标准、深度或最大研究深度</li>
             <li>📊 <strong>多种输出格式:</strong> 摘要、详细、Markdown或JSON</li>
-            <li>🪜 <strong>科学上网:</strong> 无需工具即可使用谷歌功能，服务器科学上网工具也有不稳定的时候，遇到问题，可以过一个小时再试</li>
+            <li>🪜 <strong>科学上网:</strong> 直接使用谷歌功能，服务器科学上网偶有不稳定，遇到问题可一个小时再试</li>
             <li>🛟 <strong>研究保存:</strong> 研究结果，只会自动保存在浏览器内，没有云端备份，所以重要输出记得下载到本地</li>
             <li>🦺 <strong>IP限制:</strong> 仅限公司IP访问以确保安全，想开通其他IP可联系王聪</li>
           </ul>
@@ -348,8 +348,9 @@ class DeepResearchApp {
   }
 
   async pollForResults(researchId) {
-    const pollInterval = 2000;
-    const maxAttempts = 300;
+    const pollInterval = 5000;
+    const maxAttempts = 720; //max 1 hour
+    const averageAttempts = maxAttempts / 15; // 4 minutes
     let attempts = 0;
 
     const poll = async () => {
@@ -368,7 +369,7 @@ class DeepResearchApp {
         } else if (status.status === 'failed') {
           throw new Error(status.error || 'Research failed');
         } else {
-          const progress = Math.min(20 + (attempts / maxAttempts) * 70, 90);
+          const progress = Math.min(20 + (attempts / averageAttempts) * 70, 90);
           this.progressBar.style.width = progress + '%';
           this.progressStatus.textContent = status.message || 'Researching...';
           

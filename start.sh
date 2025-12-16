@@ -85,8 +85,8 @@ stop_server() {
     echo -e "${BLUE}🛑 Stopping server...${NC}"
     pkill -f "node dist/web/server.js" 2>/dev/null || true
     pkill -f "node.*gemini-research-agent.*server" 2>/dev/null || true
-    # Also check and kill anything on port 3000
-    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+    # Also check and kill anything on port 8080
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
     sleep 1
     echo -e "${GREEN}✓ Server stopped${NC}"
 }
@@ -172,28 +172,39 @@ if [ "$DEBUG_MODE" = true ]; then
     echo ""
 fi
 
+# Set up logging
+LOG_DIR="logs"
+mkdir -p "$LOG_DIR"
+
+# Create log file with timestamp
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_FILE="$LOG_DIR/server_${TIMESTAMP}.log"
+
+echo -e "${BLUE}📝 Server logs will be saved to: $LOG_FILE${NC}"
 echo ""
 
 # Run based on mode
 if [ "$MODE" = "web" ]; then
-    # Check if port 3000 is already in use and stop it
-    if lsof -ti:3000 > /dev/null 2>&1; then
-        echo -e "${YELLOW}⚠ Port 3000 is in use. Stopping existing server...${NC}"
-        lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+    # Check if port 8080 is already in use and stop it
+    if lsof -ti:8080 > /dev/null 2>&1; then
+        echo -e "${YELLOW}⚠ Port 8080 is in use. Stopping existing server...${NC}"
+        lsof -ti:8080 | xargs kill -9 2>/dev/null || true
         sleep 1
         echo -e "${GREEN}✓ Existing server stopped${NC}"
     fi
     
     echo -e "${GREEN}🚀 Starting web server...${NC}"
     echo ""
-    npm start
+    # Start server with output redirected to log file
+    npm start 2>&1 | tee "$LOG_FILE"
 elif [ "$MODE" = "cli" ]; then
     if [ ${#CLI_ARGS[@]} -eq 0 ]; then
         echo -e "${BLUE}📋 CLI Help:${NC}"
-        npm run cli -- --help
+        npm run cli -- --help 2>&1 | tee "$LOG_FILE"
     else
         echo -e "${GREEN}🔍 Running CLI command...${NC}"
         echo ""
-        npm run cli -- "${CLI_ARGS[@]}"
+        # Run CLI with output redirected to log file
+        npm run cli -- "${CLI_ARGS[@]}" 2>&1 | tee "$LOG_FILE"
     fi
 fi

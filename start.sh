@@ -2,6 +2,8 @@
 
 # Gemini Deep Research Agent - Startup Script
 # ============================================
+# proxy to google
+export HTTPS_PROXY="http://127.0.0.1:7890"
 
 set -e
 

@@ -145,11 +145,9 @@ class DeepResearchApp {
             <li>📁 <strong>多文档上传:</strong> 上传多个文件或整个文件夹作为上下文</li>
             <li>🎚️ <strong>可配置深度:</strong> 快速、标准、深度或最大研究深度</li>
             <li>📊 <strong>多种输出格式:</strong> 摘要、详细、Markdown或JSON</li>
-            <li>🌐 <strong>Web界面:</strong> 现代响应式浏览器研究界面</li>
-            <li>💻 <strong>CLI工具:</strong> 强大的命令行界面，支持脚本和自动化</li>
-            <li>📚 <strong>库模块:</strong> 可导入到您自己的Node.js项目中</li>
-            <li>⚡ <strong>后台处理:</strong> 长时间运行的研究，带进度跟踪</li>
-            <li>🔗 <strong>GitHub仓库克隆:</strong> 在查询中粘贴GitHub URL - 自动克隆并分析仓库</li>
+            <li>🪜 <strong>科学上网:</strong> 无需工具即可使用谷歌功能，服务器科学上网工具也有不稳定的时候，遇到问题，可以过一个小时再试</li>
+            <li>🛟 <strong>研究保存:</strong> 研究结果，只会自动保存在浏览器内，没有云端备份，所以重要输出记得下载到本地</li>
+            <li>🦺 <strong>IP限制:</strong> 仅限公司IP访问以确保安全，想开通其他IP可联系王聪</li>
           </ul>
 
           <h2 style="color: var(--primary); margin-top: 1.5em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">🎚️ 研究深度选项</h2>
@@ -207,7 +205,7 @@ class DeepResearchApp {
           </ul>
 
           <hr style="margin: 2em 0;">
-          <p><em>本项目使用深度研究能力作为自主研究助手。</em></p>
+          <p><em>本项目使用深度研究能力作为自主研究助手，工作基于<a href="https://github.com/dazdaz/gemini-deep-research" target="_blank">GitHub项目</a>。</em></p>
         </div>
       </section>
     `;

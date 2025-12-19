@@ -338,9 +338,8 @@ class DeepResearchApp {
   }
 
   async pollForResults(researchId) {
-    const pollInterval = 5000;
-    const maxAttempts = 720; //max 1 hour
-    const averageAttempts = maxAttempts / 15; // 4 minutes
+    const pollInterval = 10000;
+    const maxAttempts = 360; //max 1 hour
     let attempts = 0;
     let consecutiveFailures = 0;
     const maxConsecutiveFailures = 5; // 连续失败5次后才认为有严重问题
@@ -366,7 +365,7 @@ class DeepResearchApp {
         } else if (status.status === 'failed') {
           throw new Error(status.error || 'Research failed');
         } else {
-          const progress = Math.min(20 + (attempts / averageAttempts) * 70, 90);
+          const progress = Math.min(10 + attempts * 2.5, 90);
           this.progressBar.style.width = progress + '%';
 
           // 显示进度，如果有服务器返回的进度信息则使用，否则显示默认信息

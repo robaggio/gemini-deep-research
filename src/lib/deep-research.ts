@@ -269,7 +269,7 @@ export class DeepResearchAgent {
 
     const prompt = `Review the following research report to ensure logical consistency, depth, and clarity.
 Identify any logical gaps, synthesize contradictory evidence, and structure the final argument persuasively.
-Maintain all citations and the original report structure where possible, but enhance the prose and reasoning.
+Maintain all citations and the original report structure where possible, but enhance the prose and reasoning. 使用简体中文输出。
 
 RESEARCH REPORT:
 ${content}`;

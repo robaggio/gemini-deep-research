@@ -9,6 +9,7 @@ class DeepResearchApp {
     this.startTime = null;
     this.elapsedTimer = null;
     this.currentZoom = 14;
+    this.pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
     this.init();
   }
 
@@ -19,6 +20,7 @@ class DeepResearchApp {
     this.initZoom();
     this.renderHistory();
     this.loadConfig();
+    this.checkPendingResearch();
   }
 
   bindElements() {
@@ -340,16 +342,23 @@ class DeepResearchApp {
     const maxAttempts = 720; //max 1 hour
     const averageAttempts = maxAttempts / 15; // 4 minutes
     let attempts = 0;
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 5; // 连续失败5次后才认为有严重问题
 
     const poll = async () => {
       try {
         const response = await fetch(`/api/research/${researchId}`);
-        if (!response.ok) throw new Error('Failed to get status');
-        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const apiResponse = await response.json();
         // API returns { success: true, data: { id, status, result, ... } }
         const status = apiResponse.data || apiResponse;
-        
+
+        // 重置连续失败计数器
+        consecutiveFailures = 0;
+
         if (status.status === 'completed') {
           const totalTime = (Date.now() - this.startTime) / 1000;
           this.handleResearchComplete(status, totalTime);
@@ -359,8 +368,14 @@ class DeepResearchApp {
         } else {
           const progress = Math.min(20 + (attempts / averageAttempts) * 70, 90);
           this.progressBar.style.width = progress + '%';
+
+          // 显示进度，如果有服务器返回的进度信息则使用，否则显示默认信息
+          if (status.progress !== undefined) {
+            this.progressBar.style.width = status.progress + '%';
+          }
+
           this.progressStatus.textContent = status.message || 'Researching...';
-          
+
           if (++attempts < maxAttempts) {
             setTimeout(poll, pollInterval);
           } else {
@@ -368,9 +383,27 @@ class DeepResearchApp {
           }
         }
       } catch (error) {
-        console.error('Polling error:', error);
-        this.showToast('Error: ' + error.message, 'error');
-        this.resetResearchUI();
+        consecutiveFailures++;
+        console.error(`Polling error (${consecutiveFailures}/${maxConsecutiveFailures}):`, error);
+
+        // 如果连续失败次数未达到阈值，显示警告但继续轮询
+        if (consecutiveFailures < maxConsecutiveFailures) {
+          this.showToast(`网络连接问题 (${consecutiveFailures}/${maxConsecutiveFailures})，正在重试...`, 'warning');
+          this.progressStatus.textContent = `网络连接问题，正在重试... (${consecutiveFailures}/${maxConsecutiveFailures})`;
+
+          // 使用指数退避策略，增加轮询间隔
+          const backoffDelay = Math.min(pollInterval * Math.pow(1.5, consecutiveFailures - 1), 30000);
+          setTimeout(poll, backoffDelay);
+          return;
+        }
+
+        // 连续失败次数过多，但仍然给用户选择继续的机会
+        this.showToast(`网络连接持续失败，但研究可能仍在进行中`, 'error');
+        this.progressStatus.textContent = '网络连接失败，研究可能仍在进行中...';
+
+        // 显示继续选项而不是直接重置
+        this.showContinueOption(researchId);
+        return;
       }
     };
 
@@ -769,10 +802,228 @@ class DeepResearchApp {
     return div.textContent || div.innerText || '';
   }
 
+  showContinueOption(researchId) {
+    // 在进度区域添加继续选项
+    const continueDiv = document.createElement('div');
+    continueDiv.className = 'continue-options';
+    continueDiv.innerHTML = `
+      <div class="continue-message">
+        <p><strong>网络连接问题</strong></p>
+        <p>研究可能仍在后台进行，您可以选择：</p>
+      </div>
+      <div class="continue-buttons">
+        <button class="continue-btn" onclick="app.resumePolling('${researchId}')">
+          <i class="fas fa-sync"></i> 继续尝试
+        </button>
+        <button class="wait-btn" onclick="app.waitForManualCheck('${researchId}')">
+          <i class="fas fa-clock"></i> 稍后手动检查
+        </button>
+      </div>
+      <div class="manual-check-section">
+        <small>研究ID: <code>${researchId}</code></small>
+      </div>
+    `;
+
+    // 插入到进度区域后面
+    this.progressSection.parentNode.insertBefore(continueDiv, this.progressSection.nextSibling);
+  }
+
+  resumePolling(researchId) {
+    // 移除继续选项
+    const continueDiv = document.querySelector('.continue-options');
+    if (continueDiv) continueDiv.remove();
+
+    // 重置失败计数器，重新开始轮询
+    this.showToast('正在重新连接...', 'info');
+    this.progressStatus.textContent = '正在重新连接...';
+
+    // 重新开始轮询，但重置计数器
+    this.pollForResults(researchId);
+  }
+
+  waitForManualCheck(researchId) {
+    // 移除继续选项
+    const continueDiv = document.querySelector('.continue-options');
+    if (continueDiv) continueDiv.remove();
+
+    // 保存研究ID到本地存储，以便稍后手动检查
+    const pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+    pendingResearch.push({
+      id: researchId,
+      query: this.queryInput.value.trim(),
+      timestamp: new Date().toISOString(),
+      startTime: this.startTime
+    });
+    localStorage.setItem('pendingResearch', JSON.stringify(pendingResearch));
+
+    // 显示手动检查指导
+    this.progressStatus.textContent = '研究可能仍在进行中，请稍后手动检查状态';
+    this.showToast(`研究ID已保存: ${researchId}`, 'info');
+
+    // 添加手动检查按钮
+    const manualCheckDiv = document.createElement('div');
+    manualCheckDiv.className = 'manual-check';
+    manualCheckDiv.innerHTML = `
+      <button class="manual-check-btn" onclick="app.manualCheckResearch('${researchId}')">
+        <i class="fas fa-search"></i> 手动检查研究状态
+      </button>
+    `;
+
+    this.progressSection.parentNode.insertBefore(manualCheckDiv, this.progressSection.nextSibling);
+
+    // 停止计时器但保持界面状态
+    clearInterval(this.elapsedTimer);
+  }
+
+  async manualCheckResearch(researchId) {
+    try {
+      this.showToast('正在检查研究状态...', 'info');
+      const response = await fetch(`/api/research/${researchId}`);
+
+      if (response.ok) {
+        const apiResponse = await response.json();
+        const status = apiResponse.data || apiResponse;
+
+        if (status.status === 'completed') {
+          // 移除手动检查区域
+          const manualCheckDiv = document.querySelector('.manual-check');
+          if (manualCheckDiv) manualCheckDiv.remove();
+
+          // 重新启动计时器并处理完成
+          this.startTime = Date.now(); // 重置开始时间用于显示总时间
+          this.elapsedTimer = setInterval(() => this.updateElapsedTime(), 100);
+
+          const totalTime = (Date.now() - this.startTime) / 1000;
+          this.handleResearchComplete(status, totalTime);
+
+          // 从待处理研究中移除
+          this.removeFromPendingResearch(researchId);
+        } else if (status.status === 'failed') {
+          this.showToast('研究失败: ' + (status.error || '未知错误'), 'error');
+          this.removeFromPendingResearch(researchId);
+          this.resetResearchUI();
+        } else {
+          this.showToast('研究仍在进行中...', 'info');
+          this.progressStatus.textContent = `研究中... (进度: ${status.progress || '未知'})`;
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      this.showToast('检查失败: ' + error.message, 'error');
+    }
+  }
+
+  removeFromPendingResearch(researchId) {
+    const pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+    const filtered = pendingResearch.filter(r => r.id !== researchId);
+    localStorage.setItem('pendingResearch', JSON.stringify(filtered));
+  }
+
+  
+  checkPendingResearch() {
+    if (this.pendingResearch.length > 0) {
+      // 显示有未完成研究的提示
+      const pendingCount = this.pendingResearch.length;
+      this.showToast(`发现 ${pendingCount} 个可能未完成的研究，可以手动检查状态`, 'warning');
+
+      // 在历史记录区域添加一个显示待处理研究的按钮
+      const pendingSection = document.createElement('div');
+      pendingSection.className = 'pending-research-section';
+      pendingSection.innerHTML = `
+        <button class="pending-research-btn" onclick="app.showPendingResearch()">
+          <i class="fas fa-clock"></i>
+          检查未完成研究 (${pendingCount})
+        </button>
+      `;
+
+      // 插入到历史记录标题后面
+      const historyHeader = this.resultsList.previousElementSibling;
+      if (historyHeader) {
+        historyHeader.parentNode.insertBefore(pendingSection, historyHeader.nextSibling);
+      }
+    }
+  }
+
+  showPendingResearch() {
+    if (this.pendingResearch.length === 0) {
+      this.showToast('没有未完成的研究', 'info');
+      return;
+    }
+
+    // 创建一个模态框显示待处理研究
+    const modal = document.createElement('div');
+    modal.className = 'pending-research-modal';
+    modal.innerHTML = `
+      <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-clock"></i> 未完成的研究</h3>
+          <button class="modal-close" onclick="this.closest('.pending-research-modal').remove()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>以下研究可能因网络问题而中断，您可以手动检查它们的状态：</p>
+          <div class="pending-list">
+            ${this.pendingResearch.map(research => `
+              <div class="pending-item">
+                <div class="pending-info">
+                  <strong>${this.escapeHtml(research.query)}</strong>
+                  <br>
+                  <small>ID: <code>${research.id}</code></small>
+                  <br>
+                  <small>时间: ${new Date(research.timestamp).toLocaleString()}</small>
+                </div>
+                <div class="pending-actions">
+                  <button class="check-pending-btn" onclick="app.manualCheckResearch('${research.id}')">
+                    <i class="fas fa-search"></i> 检查
+                  </button>
+                  <button class="remove-pending-btn" onclick="app.removeFromPendingResearch('${research.id}')">
+                    <i class="fas fa-trash"></i> 移除
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  removeFromPendingResearch(researchId) {
+    const pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+    const filtered = pendingResearch.filter(r => r.id !== researchId);
+    localStorage.setItem('pendingResearch', JSON.stringify(filtered));
+    this.pendingResearch = filtered;
+
+    // 更新UI
+    const modal = document.querySelector('.pending-research-modal');
+    if (modal) {
+      if (this.pendingResearch.length === 0) {
+        modal.remove();
+        // 移除待处理研究按钮
+        const pendingSection = document.querySelector('.pending-research-section');
+        if (pendingSection) pendingSection.remove();
+        this.showToast('所有未完成研究已清理', 'success');
+      } else {
+        // 更新模态框内容
+        this.showPendingResearch();
+        // 更新按钮文本
+        const pendingBtn = document.querySelector('.pending-research-btn');
+        if (pendingBtn) {
+          pendingBtn.innerHTML = `<i class="fas fa-clock"></i> 检查未完成研究 (${this.pendingResearch.length})`;
+        }
+      }
+    }
+  }
+
   showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${message}`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}`;
     this.toastContainer.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }

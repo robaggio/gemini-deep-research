@@ -163,7 +163,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       citations,
       refineWithThinking: refineWithThinking === 'true' || refineWithThinking === true
     });
-    
+
     // Generate result ID
     const resultId = `research_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -212,7 +212,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
 
       // Store completed result
       researchResults.set(resultId, result);
-      
+
       // Close session
       await agent.closeSession();
     } catch (error) {
@@ -264,7 +264,7 @@ router.get('/research/:id', (req: Request, res: Response) => {
  */
 router.delete('/research/:id', (req: Request, res: Response) => {
   const { id } = req.params;
-  
+
   if (researchResults.has(id)) {
     researchResults.delete(id);
     res.json({ success: true, message: 'Result deleted' });

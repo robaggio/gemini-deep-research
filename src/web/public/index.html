@@ -80,14 +80,23 @@
                   <option value="news">新闻</option>
                 </select>
               </div>
-              <div class="option-group checkbox-group">
-                <label>
-                  <input type="checkbox" id="deepThinkCheck">
-                  <span><i class="fas fa-brain"></i> 深度思考</span>
-                </label>
-              </div>
               <div class="option-group upload-group">
-                <label><i class="fas fa-cloud-upload-alt"></i> 文件</label>
+                <div class="upload-header">
+                  <label><i class="fas fa-cloud-upload-alt"></i> 文件</label>
+                  <div class="file-types-info">
+                    <i class="fas fa-info-circle" title="支持的文件类型"></i>
+                    <div class="file-types-tooltip">
+                      <h4>支持的文件类型</h4>
+                      <ul>
+                        <li><strong>文本文件:</strong> .txt, .md, .csv</li>
+                        <li><strong>网页文件:</strong> .html, .htm</li>
+                        <li><strong>结构化数据:</strong> .json, .xml, .yaml</li>
+                        <li><strong>代码文件:</strong> .py, .js, .ts, .java, .c, .cpp, .h, .hpp</li>
+                      </ul>
+                      <small>最大文件大小: 50MB，最多20个文件</small>
+                    </div>
+                  </div>
+                </div>
                 <div class="inline-upload" id="dropZone">
                   <button type="button" class="browse-btn" id="browseBtn"><i class="fas fa-file"></i> 选择文件</button>
                   <button type="button" class="browse-btn folder-btn" id="browseFolderBtn"><i class="fas fa-folder"></i> 选择文件夹</button>
@@ -100,23 +109,6 @@
 
             <!-- File Queue (only shows when files are selected) -->
             <div class="file-queue" id="fileQueue"></div>
-
-            <!-- Supported File Types -->
-            <div class="supported-types">
-              <details>
-                <summary><i class="fas fa-info-circle"></i> 支持的文件类型</summary>
-                <div class="file-types-grid">
-                  <div class="file-type-group">
-                    <strong>文本文档:</strong>
-                    <span>.txt, .md, .csv, .json, .xml, .html, .yaml</span>
-                  </div>
-                  <div class="file-type-group">
-                    <strong>代码文件:</strong>
-                    <span>.py, .js, .ts, .java, .c, .cpp, .h, .hpp</span>
-                  </div>
-                </div>
-              </details>
-            </div>
 
             <!-- Action Button -->
             <div class="action-row">

@@ -27,26 +27,25 @@ class DeepResearchApp {
     this.queryInput = document.getElementById('queryInput');
     this.depthSelect = document.getElementById('depthSelect');
     this.sourcesSelect = document.getElementById('sourcesSelect');
-    this.deepThinkCheck = document.getElementById('deepThinkCheck');
-    
+
     this.dropZone = document.getElementById('dropZone');
     this.fileInput = document.getElementById('fileInput');
     this.folderInput = document.getElementById('folderInput');
     this.browseBtn = document.getElementById('browseBtn');
     this.browseFolderBtn = document.getElementById('browseFolderBtn');
       this.fileQueue = document.getElementById('fileQueue');
-    
+
     this.startResearchBtn = document.getElementById('startResearchBtn');
     this.progressSection = document.getElementById('progressSection');
     this.progressBar = document.getElementById('progressBar');
     this.progressStatus = document.getElementById('progressStatus');
     this.elapsedTime = document.getElementById('elapsedTime');
-    
+
     this.tabsContainer = document.getElementById('tabsContainer');
     this.addTabBtn = document.getElementById('addTabBtn');
     this.newResearchPanel = document.getElementById('newResearchPanel');
     this.resultPanelsContainer = document.getElementById('resultPanelsContainer');
-    
+
     this.resultsList = document.getElementById('resultsList');
     this.clearHistoryBtn = document.getElementById('clearHistoryBtn');
     this.themeToggle = document.getElementById('themeToggle');
@@ -303,7 +302,7 @@ class DeepResearchApp {
       formData.append('format', 'markdown');
       formData.append('sources', this.sourcesSelect.value);
       formData.append('citations', 'true');
-      formData.append('refineWithThinking', this.deepThinkCheck.checked ? 'true' : 'false');
+      formData.append('refineWithThinking', 'false');
 
       // Add files if any
       if (this.files.length > 0) {
@@ -359,6 +358,11 @@ class DeepResearchApp {
         consecutiveFailures = 0;
 
         if (status.status === 'completed') {
+          // 确保status有query信息，用于标题显示
+          if (!status.query && this.queryInput.value.trim()) {
+            status.query = this.queryInput.value.trim();
+          }
+
           const totalTime = (Date.now() - this.startTime) / 1000;
           this.handleResearchComplete(status, totalTime);
           return;
@@ -414,23 +418,26 @@ class DeepResearchApp {
     this.progressBar.style.width = '100%';
     this.progressStatus.textContent = 'Complete!';
 
+    // 优先使用result中的query，回退到当前输入框的值
+    const query = result.query || this.queryInput.value.trim() || '未命名研究';
+
     const resultEntry = {
-      id: result.researchId || 'result_' + Date.now(),
-      query: this.queryInput.value.trim(),
+      id: result.researchId || result.id || 'result_' + Date.now(),
+      query: query,
       content: result.result || result.content || '',
       timestamp: new Date().toISOString(),
       totalTime: totalTime,
-      depth: this.depthSelect.value,
+      depth: result.depth || this.depthSelect.value || 'deep',
       format: 'markdown'
     };
 
     this.researchHistory.unshift(resultEntry);
     if (this.researchHistory.length > 20) this.researchHistory.pop();
     localStorage.setItem('researchHistory', JSON.stringify(this.researchHistory));
-    
+
     this.renderHistory();
     this.showResult(resultEntry);
-    
+
     setTimeout(() => this.resetResearchUI(), 500);
     this.showToast('研究完成！', 'success');
   }
@@ -887,6 +894,15 @@ class DeepResearchApp {
           // 移除手动检查区域
           const manualCheckDiv = document.querySelector('.manual-check');
           if (manualCheckDiv) manualCheckDiv.remove();
+
+          // 获取原始查询信息，确保标题不丢失
+          const pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+          const pendingItem = pendingResearch.find(r => r.id === researchId);
+
+          // 将查询信息附加到status对象中
+          if (pendingItem && !status.query) {
+            status.query = pendingItem.query;
+          }
 
           // 重新启动计时器并处理完成
           this.startTime = Date.now(); // 重置开始时间用于显示总时间

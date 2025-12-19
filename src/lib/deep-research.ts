@@ -361,7 +361,7 @@ ${content}`;
       console.log('[DeepResearch] Status:', status);
 
       // Update progress
-      progressPercent = Math.min(progressPercent + 10, 90);
+      progressPercent = Math.min(progressPercent + 5, 90);
       this.emitEvent(onEvent, { 
         type: 'progress', 
         timestamp: new Date(), 

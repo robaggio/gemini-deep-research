@@ -301,6 +301,7 @@ class DeepResearchApp {
       formData.append('format', 'markdown');
       formData.append('sources', this.sourcesSelect.value);
       formData.append('citations', 'true');
+      formData.append('refineWithThinking', this.deepThinkCheck.checked ? 'true' : 'false');
 
       // Add files if any
       if (this.files.length > 0) {

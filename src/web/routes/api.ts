@@ -83,7 +83,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       });
     }
 
-    const { query, depth = 'deep', format = 'markdown', sources = 'all', citations = false } = req.body;
+    const { query, depth = 'deep', format = 'markdown', sources = 'all', citations = false, refineWithThinking = false } = req.body;
 
     if (!query || typeof query !== 'string') {
       return res.status(400).json({
@@ -156,6 +156,13 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
     // Create agent and start research
     const agent = createDeepResearchAgent(apiKey);
     // console.log('[API] Starting research with', documents.length > 0 ? `${documents.length} documents` : 'no documents');
+    console.log('[API] Research options:', {
+      depth,
+      format,
+      sources,
+      citations,
+      refineWithThinking: refineWithThinking === 'true' || refineWithThinking === true
+    });
     
     // Generate result ID
     const resultId = `research_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -190,6 +197,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
             outputFormat: format as OutputFormat,
             sources: sources as SourceType,
             includeCitations: citations === 'true' || citations === true,
+            refineWithThinking: refineWithThinking === 'true' || refineWithThinking === true,
           },
         },
         (event) => {

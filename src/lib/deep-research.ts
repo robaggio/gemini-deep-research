@@ -89,6 +89,9 @@ export class DeepResearchAgent {
       // Build the research input
       const input = this.buildResearchInput(request);
 
+      console.log('[DeepResearch] Research options:', request.options);
+      console.log('[DeepResearch] Refine with Thinking enabled:', request.options?.refineWithThinking);
+
       this.emitEvent(onEvent, { type: 'progress', timestamp: new Date(), data: { progress: 5 } });
 
       // Create interaction with background=true (required for Deep Research)

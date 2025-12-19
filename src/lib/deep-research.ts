@@ -83,8 +83,8 @@ export class DeepResearchAgent {
     this.emitEvent(onEvent, { type: 'start', timestamp: new Date() });
 
     try {
-      console.log('[DeepResearch] Using Gemini Deep Research Agent:', DEEP_RESEARCH_AGENT);
-      console.log('[DeepResearch] API Base URL:', API_BASE_URL);
+      // console.log('[DeepResearch] Using Gemini Deep Research Agent:', DEEP_RESEARCH_AGENT);
+      // console.log('[DeepResearch] API Base URL:', API_BASE_URL);
 
       // Build the research input
       const input = this.buildResearchInput(request);
@@ -118,7 +118,26 @@ export class DeepResearchAgent {
       //   'Content-Type': 'application/json',
       //   'x-goog-api-key': this.config.apiKey ? this.config.apiKey.substring(0, 10) + '***' : 'MISSING'
       // });
-      // console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
+      console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
+
+      //测试功能，临时返回
+      // return {
+      //   id: resultId,
+      //   status: 'completed',
+      //   content: '测试内容',
+      //   sources: [],
+      //   metadata: {
+      //     depth: request.options?.depth || 'deep',
+      //     outputFormat: request.options?.outputFormat || 'markdown',
+      //     documentsUsed: request.documents?.length || 0,
+      //     sourcesFound: 0,
+      //     processingTime: Date.now() - startTime,
+      //   },
+      //   query: request.query,
+      //   progress: 100,
+      //   createdAt: new Date(startTime),
+      //   completedAt: new Date(),
+      // };
 
       const createResponse = await axios.post(createUrl, createBody, {
         headers: {
@@ -411,13 +430,18 @@ ${content}`;
       input += '\n\nInclude citations for all factual claims and reference sources clearly.';
     }
 
-    // Add document context if provided
+    // Add document context if provided (text files only)
     if (request.documents && request.documents.length > 0) {
-      input += `\n\nAnalyze the following ${request.documents.length} document(s) and incorporate relevant information:`;
+      console.log(`[DeepResearch] Adding ${request.documents.length} text documents to research context`);
+      console.log('[DeepResearch] Document info:', request.documents.map(d => ({
+        name: d.name,
+        mimeType: d.mimeType,
+        size: d.size,
+        contentLength: d.content?.length
+      })));
+      input += `\n\nAnalyze the following ${request.documents.length} text document(s) and incorporate relevant information:`;
       for (const doc of request.documents) {
-        if (doc.mimeType.startsWith('text/') || doc.mimeType === 'application/json') {
-          input += `\n\n--- Document: ${doc.name} ---\n${doc.content}\n--- End Document ---`;
-        }
+        input += `\n\n--- Document: ${doc.name} (${doc.mimeType}) ---\n${doc.content}\n--- End Document ---`;
       }
     }
 

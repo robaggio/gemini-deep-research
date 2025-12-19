@@ -16,10 +16,9 @@ import {
 
 // Default supported file types for research
 const DEFAULT_EXTENSIONS = [
-  '.txt', '.md', '.pdf', '.doc', '.docx',
-  '.csv', '.json', '.xml', '.html', '.htm',
+  '.txt', '.md', '.csv', '.json', '.xml', '.html', '.htm',
   '.py', '.js', '.ts', '.java', '.c', '.cpp', '.h',
-  '.yaml', '.yml', '.toml', '.ini', '.cfg',
+  '.yaml'
 ];
 
 // Default max file size (10MB)
@@ -206,15 +205,10 @@ export class FileManager {
       }
 
       const stats = fs.statSync(absolutePath);
-      const mimeType = mimeTypes.lookup(absolutePath) || 'application/octet-stream';
-      const isText = this.isTextMimeType(mimeType);
+      const mimeType = mimeTypes.lookup(absolutePath) || 'text/plain';
 
-      let content: string;
-      if (isText) {
-        content = fs.readFileSync(absolutePath, 'utf-8');
-      } else {
-        content = fs.readFileSync(absolutePath).toString('base64');
-      }
+      // For text-only support, always read as UTF-8
+      const content = fs.readFileSync(absolutePath, 'utf-8');
 
       return {
         name: path.basename(absolutePath),

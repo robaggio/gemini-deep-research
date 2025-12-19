@@ -92,13 +92,31 @@
                   <button type="button" class="browse-btn" id="browseBtn"><i class="fas fa-file"></i> 选择文件</button>
                   <button type="button" class="browse-btn folder-btn" id="browseFolderBtn"><i class="fas fa-folder"></i> 选择文件夹</button>
                 </div>
-                <input type="file" id="fileInput" multiple hidden>
+                <input type="file" id="fileInput" multiple hidden
+                       accept=".txt,.md,.csv,.html,.htm,.json,.xml,.py,.js,.ts,.java,.c,.cpp,.h,.hpp,.yaml,text/plain,text/markdown,text/csv,text/html,application/json,application/xml,application/javascript,text/javascript,text/x-python,text/x-java-source,text/x-c,text/x-c++">
                 <input type="file" id="folderInput" webkitdirectory directory multiple hidden>
               </div>
             </div>
 
             <!-- File Queue (only shows when files are selected) -->
             <div class="file-queue" id="fileQueue"></div>
+
+            <!-- Supported File Types -->
+            <div class="supported-types">
+              <details>
+                <summary><i class="fas fa-info-circle"></i> 支持的文件类型</summary>
+                <div class="file-types-grid">
+                  <div class="file-type-group">
+                    <strong>文本文档:</strong>
+                    <span>.txt, .md, .csv, .json, .xml, .html, .yaml</span>
+                  </div>
+                  <div class="file-type-group">
+                    <strong>代码文件:</strong>
+                    <span>.py, .js, .ts, .java, .c, .cpp, .h, .hpp</span>
+                  </div>
+                </div>
+              </details>
+            </div>
 
             <!-- Action Button -->
             <div class="action-row">

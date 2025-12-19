@@ -291,38 +291,25 @@ class DeepResearchApp {
     this.elapsedTimer = setInterval(() => this.updateElapsedTime(), 100);
 
     try {
-      let uploadedFiles = [];
-      if (this.files.length > 0) {
-        this.progressStatus.textContent = '上传中...';
-        this.progressBar.style.width = '10%';
-        
-        const formData = new FormData();
-        this.files.forEach(file => formData.append('files', file));
-        
-        const uploadResponse = await fetch('/api/upload', { method: 'POST', body: formData });
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          uploadedFiles = uploadResult.files || [];
-        }
-      }
-
       this.progressStatus.textContent = '研究中...';
       this.progressBar.style.width = '20%';
 
-      const researchBody = {
-        query,
-        depth: this.depthSelect.value,
-        outputFormat: 'markdown',
-        sourceTypes: this.sourcesSelect.value,
-        includeCitations: true,
-        refineWithThinking: this.deepThinkCheck ? this.deepThinkCheck.checked : false,
-        documents: uploadedFiles
-      };
+      // Create FormData for research request
+      const formData = new FormData();
+      formData.append('query', query);
+      formData.append('depth', this.depthSelect.value);
+      formData.append('format', 'markdown');
+      formData.append('sources', this.sourcesSelect.value);
+      formData.append('citations', 'true');
+
+      // Add files if any
+      if (this.files.length > 0) {
+        this.files.forEach(file => formData.append('files', file));
+      }
 
       const response = await fetch('/api/research', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(researchBody)
+        body: formData
       });
 
       if (!response.ok) throw new Error(`Research failed: ${response.statusText}`);

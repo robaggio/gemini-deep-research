@@ -32,11 +32,15 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
-      'text/plain', 'text/markdown', 'text/csv', 'text/html',
-      'application/pdf', 'application/json', 'application/xml',
-      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain', 'text/markdown', 'text/csv', 'text/html', 'text/x-python', 'text/x-java-source', 'text/x-c', 'text/x-c++',
+      'application/json', 'application/xml', 'application/x-yaml',
+      'application/javascript', 'application/typescript', 'text/javascript'
     ];
-    const allowedExtensions = ['.txt', '.md', '.csv', '.html', '.pdf', '.json', '.xml', '.doc', '.docx'];
+    const allowedExtensions = [
+      '.txt', '.md', '.csv', '.html', '.htm', '.json', '.xml',
+      '.py', '.js', '.ts', '.java', '.c', '.cpp', '.h', '.hpp',
+      '.yaml'
+    ];
     
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
@@ -89,27 +93,29 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
     }
 
     // Auto-detect GitHub URLs in the query and clone them
+    // TODO: Temporarily commented out GitHub auto-clone functionality
+    /*
     let repoDocs: DocumentInput[] = [];
     const githubUrlRegex = /https?:\/\/github\.com\/[\w-]+\/[\w.-]+/gi;
     const githubUrls = query.match(githubUrlRegex) || [];
-    
+
     if (githubUrls.length > 0) {
       try {
         const { loadDocumentsFromFolder } = await import('../../lib/index.js');
         const { simpleGit } = await import('simple-git');
         const git = simpleGit();
-        
+
         for (const repoUrl of githubUrls) {
           // Create temp dir for each repo
           const tempDir = path.join(process.cwd(), 'temp_repos', `repo-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
           if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
           }
-          
+
           // Clone repo using simple-git library
           console.log(`[AutoClone] Cloning ${repoUrl} to ${tempDir}`);
           await git.clone(repoUrl, tempDir, ['--depth', '1']);
-          
+
           // Load documents
           const allowedExtensions = ['.ts', '.js', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.md', '.txt', '.json', '.xml', '.html', '.css', '.go', '.rs'];
           const docs = await loadDocumentsFromFolder(tempDir, {
@@ -117,7 +123,7 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
             extensions: allowedExtensions,
           });
           repoDocs.push(...docs);
-          
+
           // Cleanup repo
           fs.rmSync(tempDir, { recursive: true, force: true });
           console.log(`[AutoClone] Loaded ${docs.length} files from ${repoUrl}`);
@@ -127,12 +133,10 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
         // Continue without repo documents
       }
     }
+    */
 
     // Load uploaded files
     let documents: DocumentInput[] = [];
-    if (repoDocs && repoDocs.length > 0) {
-      documents.push(...repoDocs);
-    }
     const files = req.files as Express.Multer.File[];
     
     if (files && files.length > 0) {
@@ -146,9 +150,12 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
         fs.unlink(file.path, () => {});
       }
     }
+    //console.log('[API] Received documents:', documents.length, 'documents');
+    //console.log('[API] Document details:', documents.map(d => ({ name: d.name, mimeType: d.mimeType, contentLength: d.content?.length })));
 
     // Create agent and start research
     const agent = createDeepResearchAgent(apiKey);
+    // console.log('[API] Starting research with', documents.length > 0 ? `${documents.length} documents` : 'no documents');
     
     // Generate result ID
     const resultId = `research_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

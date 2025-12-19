@@ -11,7 +11,9 @@
   "scripts": {
     "build": "tsc",
     "postbuild": "mkdir -p dist/web/public && cp -r src/web/public/* dist/web/public/",
-    "dev": "concurrently --prefix none \"tsc --watch\" \"node --watch dist/web/server.js\"",
+    "dev": "concurrently --prefix none \"npm run watch-static\" \"tsc --watch\" \"node --watch dist/web/server.js\"",
+    "copy-static": "mkdir -p dist/web/public && cp -r src/web/public/* dist/web/public/",
+    "watch-static": "nodemon --watch src/web/public --ext '*' --exec 'npm run copy-static && echo \"Static files updated at $(date)\"'",
     "start": "node dist/web/server.js",
     "cli": "node dist/cli/index.js",
     "web": "node dist/web/server.js",
@@ -47,6 +49,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.9.0",
     "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11",
     "typescript": "^5.6.3"
   },
   "engines": {

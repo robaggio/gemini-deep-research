@@ -707,24 +707,165 @@ class DeepResearchApp {
       return;
     }
 
+    // Create a wrapper with styles optimized for PDF
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'background: white; color: #1a1a2e; padding: 20px; font-family: sans-serif;';
-    wrapper.innerHTML = `
-      <h2 style="color: #2563eb; margin-bottom: 8px;">${this.escapeHtml(result.query)}</h2>
-      <p style="color: #555; font-size: 14px;">Time: ${result.totalTime?.toFixed(1) || 'N/A'}s | Depth: ${result.depth || 'deep'} | Format: ${result.format || 'markdown'}</p>
-      <hr style="border: 1px solid #ddd; margin: 16px 0;">
-      <div style="color: #1a1a2e; line-height: 1.6;">
-        ${this.forceBlackText(contentEl.innerHTML)}
-      </div>
+    wrapper.style.cssText = `
+      background: white;
+      color: #1a1a2e;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      line-height: 1.7;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      orphans: 3;
+      widows: 3;
     `;
 
+    // Create title section with enhanced styling
+    // const titleSection = document.createElement('div');
+    // titleSection.innerHTML = `
+    //   <h2 style="color: #2563eb; margin-bottom: 8px; page-break-after: avoid; page-break-inside: avoid; font-size: 1.8rem; font-weight: 700; border-bottom: 2px solid #ddd; padding-bottom: 0.3em;">${this.escapeHtml(result.query)}</h2>
+    //   <p style="color: #555; font-size: 14px; page-break-after: avoid; margin-bottom: 16px;">Time: ${result.totalTime?.toFixed(1) || 'N/A'}s | Depth: ${result.depth || 'deep'} | Format: ${result.format || 'markdown'}</p>
+    //   <hr style="border: 1px solid #ddd; margin: 16px 0; page-break-after: avoid;">
+    // `;
+
+    // Create content section
+    const contentSection = document.createElement('div');
+    contentSection.innerHTML = this.forceBlackTextWithPageBreakOptimization(contentEl.innerHTML);
+
+    // Add enhanced Markdown styling
+    this.enhanceMarkdownForPDF(contentSection);
+
+    //wrapper.appendChild(titleSection);
+    wrapper.appendChild(contentSection);
+
+    // Configure html2pdf with better page break handling
     html2pdf().set({
       margin: 15,
       filename: `${filename}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      html2canvas: {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+        compress: true
+      },
+      pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy'],
+        before: '.page-break-before',
+        after: '.page-break-after',
+        avoid: ['tr', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'pre', 'blockquote']
+      },
+      floatPrecision: 16
     }).from(wrapper).save();
+  }
+
+  forceBlackTextWithPageBreakOptimization(html) {
+    // Replace any light colors with dark colors for PDF and add page break optimization
+    // Preserve font sizes, margins, padding, and other visual properties
+    return html
+      // Replace light colors with dark colors but preserve other styles
+      .replace(/color:\s*(#[a-fA-F0-9]{3,6}|rgba?\([^)]+\)|var\([^)]+\))/gi, 'color: #1a1a2e')
+      // Add page break optimization while preserving existing styles
+      .replace(/<(h[1-6])([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-after: avoid; page-break-inside: avoid;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(h[1-6])([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-after: avoid; page-break-inside: avoid;">')
+      // Handle paragraphs with style preservation
+      .replace(/<(p)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-inside: avoid; orphans: 3; widows: 3;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(p)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-inside: avoid; orphans: 3; widows: 3;">')
+      // Handle lists with proper indentation preservation
+      .replace(/<(ul|ol)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-inside: avoid; padding-left: 2.5em;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(ul|ol)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-inside: avoid; padding-left: 2.5em;">')
+      // Handle list items with indentation
+      .replace(/<(li)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-inside: avoid; margin-bottom: 0.4em;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(li)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-inside: avoid; margin-bottom: 0.4em;">')
+      // Handle code blocks
+      .replace(/<(pre)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-inside: avoid; background: #f8f9fa; padding: 1.25rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid #e9ecef;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(pre)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-inside: avoid; background: #f8f9fa; padding: 1.25rem; border-radius: 6px; overflow-x: auto; margin: 1.5rem 0; border: 1px solid #e9ecef;">')
+      // Handle blockquotes
+      .replace(/<(blockquote)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; page-break-inside: avoid; border-left: 4px solid #3b82f6; padding-left: 1rem; margin: 1.5rem 0; background: #f8fafc; padding: 1rem; border-radius: 0 6px 6px 0;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(blockquote)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; page-break-inside: avoid; border-left: 4px solid #3b82f6; padding-left: 1rem; margin: 1.5rem 0; background: #f8fafc; padding: 1rem; border-radius: 0 6px 6px 0;">')
+      // Handle images
+      .replace(/<(img)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; page-break-inside: avoid; max-width: 100% !important;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(img)([^>]*)>/gi, '<$1$2 style="page-break-inside: avoid; max-width: 100% !important;">')
+      // Handle tables
+      .replace(/<(table)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; page-break-inside: avoid;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(table)([^>]*)>/gi, '<$1$2 style="page-break-inside: avoid;">')
+      // Handle inline code
+      .replace(/<(code)([^>]*)style="([^"]*)"/gi, (_, tag, attrs, style) => {
+        const newStyle = style + '; color: #1a1a2e; background: #f1f5f9; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em;';
+        return `<${tag}${attrs}style="${newStyle}"`;
+      })
+      .replace(/<(code)([^>]*)>/gi, '<$1$2 style="color: #1a1a2e; background: #f1f5f9; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em;">')
+      // Handle divs with code-block class
+      .replace(/<div([^>]*)class="([^"]*\bcode-block\b[^"]*)"([^>]*)style="([^"]*)"/gi, (match, beforeAttrs, className, afterAttrs, style) => {
+        const newStyle = style + '; page-break-inside: avoid;';
+        return `<div${beforeAttrs}class="${className}"${afterAttrs}style="${newStyle}"`;
+      })
+      .replace(/<div([^>]*)class="([^"]*\bcode-block\b[^"]*)"([^>]*)>/gi, '<div$1class="$2"$3 style="page-break-inside: avoid;">')
+      // Handle generic style attributes to ensure color is applied
+      .replace(/style="([^"]*)"/gi, (match, style) => {
+        if (!style.includes('color:')) {
+          return style ? `style="${style}; color: #1a1a2e;"` : 'style="color: #1a1a2e;"';
+        }
+        return match;
+      });
+  }
+
+  enhanceMarkdownForPDF(element) {
+    // Add proper styling for Markdown elements to preserve hierarchy
+    const markdownStyles = `
+      h1 { color: #1a1a2e !important; font-size: 1.8rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; border-bottom: 1px solid #ddd !important; padding-bottom: 0.3em !important; }
+      h2 { color: #1a1a2e !important; font-size: 1.5rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+      h3 { color: #1a1a2e !important; font-size: 1.25rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+      h4 { color: #1a1a2e !important; font-size: 1.1rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+      h5 { color: #1a1a2e !important; font-size: 1rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+      h6 { color: #1a1a2e !important; font-size: 0.9rem !important; font-weight: 700 !important; margin: 1.5em 0 0.75em !important; line-height: 1.3 !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+      p { color: #1a1a2e !important; margin-bottom: 1.2em !important; line-height: 1.7 !important; page-break-inside: avoid !important; orphans: 3 !important; widows: 3 !important; }
+      ul, ol { color: #1a1a2e !important; margin-bottom: 1.2em !important; padding-left: 2.5em !important; page-break-inside: avoid !important; }
+      li { color: #1a1a2e !important; margin-bottom: 0.4em !important; page-break-inside: avoid !important; }
+      blockquote { color: #1a1a2e !important; border-left: 4px solid #3b82f6 !important; padding-left: 1rem !important; margin: 1.5rem 0 !important; background: #f8fafc !important; padding: 1rem !important; border-radius: 0 6px 6px 0 !important; page-break-inside: avoid !important; }
+      code { color: #1a1a2e !important; background: #f1f5f9 !important; padding: 0.2em 0.4em !important; border-radius: 4px !important; font-size: 0.9em !important; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+      pre { color: #1a1a2e !important; background: #f8f9fa !important; padding: 1.25rem !important; border-radius: 6px !important; overflow-x: auto !important; margin: 1.5rem 0 !important; border: 1px solid #e9ecef !important; page-break-inside: avoid !important; }
+      pre code { color: #1a1a2e !important; background: transparent !important; padding: 0 !important; font-size: 0.9rem !important; }
+      a { color: #3b82f6 !important; text-decoration: none !important; border-bottom: 1px solid #3b82f6 !important; }
+      hr { border: 0 !important; border-top: 1px solid #ddd !important; margin: 2rem 0 !important; }
+      table { page-break-inside: avoid !important; margin: 1.5rem 0 !important; }
+      img { page-break-inside: avoid !important; max-width: 100% !important; height: auto !important; }
+    `;
+
+    const styleElement = document.createElement('style');
+    styleElement.textContent = markdownStyles;
+    element.appendChild(styleElement);
   }
 
   forceBlackText(html) {

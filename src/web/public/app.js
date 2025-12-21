@@ -46,31 +46,37 @@ class DeepResearchApp {
     this.clearHistoryBtn = document.getElementById('clearHistoryBtn');
       this.aboutBtn = document.getElementById('aboutBtn');
       this.toastContainer = document.getElementById('toastContainer');
+      this.mobileHistoryBtn = document.getElementById('mobileHistoryBtn');
+      this.historyPanel = document.getElementById('historyPanel');
   }
 
   bindEvents() {
     this.startResearchBtn.addEventListener('click', () => this.startResearch());
-    
+
     this.browseBtn.addEventListener('click', () => this.fileInput.click());
     this.browseFolderBtn.addEventListener('click', () => this.folderInput.click());
     this.fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
     this.folderInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
-    
+
     this.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); this.dropZone.classList.add('dragover'); });
     this.dropZone.addEventListener('dragleave', () => this.dropZone.classList.remove('dragover'));
     this.dropZone.addEventListener('drop', (e) => { e.preventDefault(); this.dropZone.classList.remove('dragover'); this.handleFiles(e.dataTransfer.files); });
       // About button
     this.aboutBtn.addEventListener('click', () => this.openAboutTab());
 
-        
+    // Mobile history button
+    if (this.mobileHistoryBtn) {
+      this.mobileHistoryBtn.addEventListener('click', () => this.toggleMobileHistory());
+    }
+
     // Bind click on initial "New Research" tab
     const newResearchTab = this.tabsContainer.querySelector('[data-tab="new"]');
     if (newResearchTab) {
       newResearchTab.addEventListener('click', () => this.showNewResearchPanel());
     }
-    
+
     this.clearHistoryBtn.addEventListener('click', () => this.clearHistory());
-    
+
     this.queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.metaKey) this.startResearch();
     });
@@ -465,12 +471,16 @@ class DeepResearchApp {
       return;
     }
 
+    // 移动端显示前4个字，桌面端显示15个字符
+    const isMobile = window.innerWidth <= 768;
+    const displayText = isMobile ? result.query.slice(0, 4) : this.truncate(result.query, 15);
+
     const tab = document.createElement('button');
     tab.className = 'tab';
     tab.dataset.tab = result.id;
     tab.innerHTML = `
       <i class="fas fa-file-alt"></i>
-      <span class="tab-title">${this.truncate(result.query, 15)}</span>
+      <span class="tab-title">${displayText}</span>
       <span class="tab-close"><i class="fas fa-times"></i></span>
     `;
     
@@ -614,7 +624,13 @@ class DeepResearchApp {
     this.resultsList.querySelectorAll('.result-item').forEach(item => {
       item.addEventListener('click', () => {
         const result = this.researchHistory.find(r => r.id === item.dataset.resultId);
-        if (result) this.showResult(result);
+        if (result) {
+          this.showResult(result);
+          // Close mobile history panel if open
+          if (window.innerWidth <= 768 && this.historyPanel.classList.contains('mobile-visible')) {
+            this.closeMobileHistory();
+          }
+        }
       });
     });
 
@@ -976,6 +992,48 @@ class DeepResearchApp {
         }
       }
     }
+  }
+
+  toggleMobileHistory() {
+    if (window.innerWidth > 768) return; // Only on mobile
+
+    if (this.historyPanel.classList.contains('mobile-visible')) {
+      this.closeMobileHistory();
+    } else {
+      this.openMobileHistory();
+    }
+  }
+
+  openMobileHistory() {
+    if (window.innerWidth > 768) return; // Only on mobile
+
+    // Create mobile history header if it doesn't exist
+    let mobileHeader = this.historyPanel.querySelector('.mobile-history-header');
+    if (!mobileHeader) {
+      mobileHeader = document.createElement('div');
+      mobileHeader.className = 'mobile-history-header';
+      mobileHeader.innerHTML = `
+        <button class="mobile-history-close" onclick="app.closeMobileHistory()">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+
+      // Insert before the existing history header
+      const existingHeader = this.historyPanel.querySelector('.history-header');
+      if (existingHeader) {
+        this.historyPanel.insertBefore(mobileHeader, existingHeader);
+      } else {
+        this.historyPanel.insertBefore(mobileHeader, this.historyPanel.firstChild);
+      }
+    }
+
+    this.historyPanel.classList.add('mobile-visible');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+  }
+
+  closeMobileHistory() {
+    this.historyPanel.classList.remove('mobile-visible');
+    document.body.style.overflow = ''; // Restore scrolling
   }
 
   showToast(message, type = 'info') {

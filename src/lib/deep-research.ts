@@ -323,27 +323,62 @@ ${content}`;
 
     while (Date.now() - startTime < MAX_RESEARCH_TIME) {
       await this.sleep(POLL_INTERVAL);
-      
+
       console.log('[DeepResearch] Polling for results...');
-      
+
       console.log('[DeepResearch] Polling URL:', getUrl);
-      const response = await axios.get(getUrl, {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': this.config.apiKey
-        },
-        timeout: 30000
-      });
+
+      let response;
+      try {
+        response = await axios.get(getUrl, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.config.apiKey
+          },
+          timeout: 30000
+        });
+      } catch (error: any) {
+        // Handle network errors and HTTP errors (including 502)
+        if (error.response) {
+          // The server responded with an error status
+          if (error.response.status === 502) {
+            console.warn('[DeepResearch] Received 502 Bad Gateway, continuing to poll...');
+            continue; // Skip to next poll iteration
+          }
+
+          console.error('[DeepResearch] HTTP Error:', {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data
+          });
+
+          // For other HTTP errors, we might want to continue polling for transient issues
+          if (error.response.status >= 500 && error.response.status < 600) {
+            console.warn('[DeepResearch] Server error, continuing to poll...');
+            continue; // Skip to next poll iteration
+          }
+
+          // For client errors (4xx), we should probably fail
+          throw new Error(error.response.data?.error?.message || `HTTP error: ${error.response.status} ${error.response.statusText}`);
+        } else if (error.request) {
+          // Network error (no response received)
+          console.error('[DeepResearch] Network Error:', error.message);
+          console.warn('[DeepResearch] Network error, continuing to poll...');
+          continue; // Skip to next poll iteration
+        } else {
+          // Other error (e.g., timeout)
+          console.error('[DeepResearch] Request Error:', error.message);
+          if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            console.warn('[DeepResearch] Timeout error, continuing to poll...');
+            continue; // Skip to next poll iteration
+          }
+          throw error; // Re-throw unexpected errors
+        }
+      }
 
       console.log('[DeepResearch] Poll Response Status:', response.status);
       console.log('[DeepResearch] Poll Response Data:', JSON.stringify(response.data, null, 2));
 
-      // Handle 502 Bad Gateway errors by continuing to poll
-      if (response.status === 502) {
-        console.warn('[DeepResearch] Received 502 Bad Gateway, continuing to poll...');
-        continue; // Skip to next poll iteration
-      }
-      
       if (response.status < 200 || response.status >= 300) {
         console.error('[DeepResearch] Poll Error:', response.data);
         console.error('[DeepResearch] Full Poll Error Response:', {

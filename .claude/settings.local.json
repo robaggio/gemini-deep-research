@@ -5,7 +5,11 @@
       "Bash(node:*)",
       "Bash(curl:*)",
       "Bash(npm install:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run start)",
+      "Bash(npm start)",
+      "Bash(pkill:*)",
+      "Bash(npm run dev)"
     ],
     "deny": [],
     "ask": []

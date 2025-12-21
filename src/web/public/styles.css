@@ -3,7 +3,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; outline-color: var(--primary); }
 
-/* Theme Variables */
+/* Theme Variables - Light Theme Only */
 :root {
   --primary: #3b82f6; /* Blue 500 */
   --primary-dark: #2563eb; /* Blue 600 */
@@ -14,29 +14,6 @@
   --radius-sm: 6px;
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --header-height: 4.8rem; /* Scalable header height */
-}
-
-html { font-size: 14px; } /* Default base size */
-
-/* Dark Theme (Default) */
-[data-theme="dark"] {
-  --bg: #0f172a; /* Slate 900 */
-  --bg-secondary: #1e293b; /* Slate 800 */
-  --surface: #1e293b; /* Slate 800 */
-  --surface-hover: #334155; /* Slate 700 */
-  --input-bg: #0f172a;
-  --text: #f8fafc; /* Slate 50 */
-  --text-secondary: #94a3b8; /* Slate 400 */
-  --border: #334155; /* Slate 700 */
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
-  --header-bg: rgba(15, 23, 42, 0.85); 
-  --scrollbar-track: #0f172a;
-  --scrollbar-thumb: #334155;
-  --scrollbar-thumb-hover: #475569;
-}
-
-/* Light Theme */
-[data-theme="light"] {
   --bg: #f8fafc; /* Slate 50 */
   --bg-secondary: #ffffff; /* White */
   --surface: #ffffff;
@@ -52,6 +29,8 @@ html { font-size: 14px; } /* Default base size */
   --scrollbar-thumb-hover: #94a3b8;
 }
 
+html { font-size: 14px; } /* Fixed base size */
+
 body {
   font-family: var(--font-main);
   background: var(--bg);
@@ -59,7 +38,6 @@ body {
   line-height: 1.6;
   height: 100vh;
   overflow: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Custom Scrollbar */
@@ -114,43 +92,6 @@ body {
 .model-badge:hover { border-color: var(--primary); color: var(--primary); }
 .model-badge i { color: var(--primary); }
 
-.zoom-controls { display: flex; align-items: center; gap: 0.5rem; background: var(--surface); padding: 0.2rem 0.5rem; border-radius: 20px; border: 1px solid var(--border); }
-.zoom-value { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); min-width: 32px; text-align: center; }
-.zoom-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-}
-.zoom-btn:hover { background: var(--surface-hover); color: var(--primary); }
-
-.theme-toggle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  font-size: 1.1rem;
-}
-.theme-toggle:hover { background: var(--surface-hover); color: var(--primary); border-color: var(--primary); transform: rotate(15deg); }
-.theme-toggle .fa-sun { display: none; }
-.theme-toggle .fa-moon { display: block; }
-[data-theme="dark"] .theme-toggle .fa-sun { display: block; }
-[data-theme="dark"] .theme-toggle .fa-moon { display: none; }
 
 /* Main Content */
 .main-content {
@@ -182,7 +123,7 @@ body {
   flex-shrink: 0;
 }
 
-.tabs-container { display: flex; gap: 0.5rem; flex: 1; overflow-x: auto; padding-bottom: 0px; }
+.tabs-container { display: flex; gap: 0.5rem; align-items: flex-end; }
 
 .tab {
   display: flex;
@@ -201,6 +142,7 @@ body {
   white-space: nowrap;
   position: relative;
   top: 1px;
+  flex-shrink: 0;
 }
 .tab:hover { color: var(--text); background: var(--surface-hover); }
 .tab.active { 
@@ -221,22 +163,6 @@ body {
   background: var(--bg);
 }
 
-.add-tab-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px dashed var(--border);
-  background: transparent;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-  transition: all 0.2s;
-}
-.add-tab-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--surface-hover); }
 
 /* Tab Content */
 .tab-content-area {

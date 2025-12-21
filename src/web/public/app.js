@@ -8,17 +8,14 @@ class DeepResearchApp {
     this.activeResultId = null;
     this.startTime = null;
     this.elapsedTimer = null;
-    this.currentZoom = 14;
-    this.pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+      this.pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
     this.init();
   }
 
   init() {
     this.bindElements();
     this.bindEvents();
-    this.initTheme();
-    this.initZoom();
-    this.renderHistory();
+      this.renderHistory();
     this.loadConfig();
     this.checkPendingResearch();
   }
@@ -42,18 +39,13 @@ class DeepResearchApp {
     this.elapsedTime = document.getElementById('elapsedTime');
 
     this.tabsContainer = document.getElementById('tabsContainer');
-    this.addTabBtn = document.getElementById('addTabBtn');
-    this.newResearchPanel = document.getElementById('newResearchPanel');
+        this.newResearchPanel = document.getElementById('newResearchPanel');
     this.resultPanelsContainer = document.getElementById('resultPanelsContainer');
 
     this.resultsList = document.getElementById('resultsList');
     this.clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    this.themeToggle = document.getElementById('themeToggle');
-    this.aboutBtn = document.getElementById('aboutBtn');
-    this.zoomInBtn = document.getElementById('zoomInBtn');
-    this.zoomOutBtn = document.getElementById('zoomOutBtn');
-    this.zoomValue = document.getElementById('zoomValue');
-    this.toastContainer = document.getElementById('toastContainer');
+      this.aboutBtn = document.getElementById('aboutBtn');
+      this.toastContainer = document.getElementById('toastContainer');
   }
 
   bindEvents() {
@@ -67,20 +59,10 @@ class DeepResearchApp {
     this.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); this.dropZone.classList.add('dragover'); });
     this.dropZone.addEventListener('dragleave', () => this.dropZone.classList.remove('dragover'));
     this.dropZone.addEventListener('drop', (e) => { e.preventDefault(); this.dropZone.classList.remove('dragover'); this.handleFiles(e.dataTransfer.files); });
-    
-    // Theme toggle
-    this.themeToggle.addEventListener('click', () => this.toggleTheme());
-    
-    // About button
+      // About button
     this.aboutBtn.addEventListener('click', () => this.openAboutTab());
 
-    // Zoom controls
-    this.zoomInBtn.addEventListener('click', () => this.adjustZoom(1));
-    this.zoomOutBtn.addEventListener('click', () => this.adjustZoom(-1));
-    
-    // "+" button creates a new research tab
-    this.addTabBtn.addEventListener('click', () => this.createNewResearchTab());
-    
+        
     // Bind click on initial "New Research" tab
     const newResearchTab = this.tabsContainer.querySelector('[data-tab="new"]');
     if (newResearchTab) {
@@ -94,20 +76,7 @@ class DeepResearchApp {
     });
   }
 
-  // Theme Management
-  initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }
-
-  toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme');
-    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-    html.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-  }
-
+  
   openAboutTab() {
     const tabId = 'about';
     let existingTab = this.tabsContainer.querySelector(`[data-tab="${tabId}"]`);
@@ -216,27 +185,7 @@ class DeepResearchApp {
     this.activateTab(tabId);
   }
 
-  initZoom() {
-    const savedZoom = localStorage.getItem('zoom');
-    if (savedZoom) {
-      this.currentZoom = parseInt(savedZoom);
-    }
-    this.updateZoomUI();
-  }
-
-  adjustZoom(delta) {
-    this.currentZoom = Math.min(Math.max(this.currentZoom + delta, 12), 24); // Limit between 12px and 24px
-    localStorage.setItem('zoom', this.currentZoom);
-    this.updateZoomUI();
-  }
-
-  updateZoomUI() {
-    document.documentElement.style.fontSize = `${this.currentZoom}px`;
-    if (this.zoomValue) {
-      this.zoomValue.textContent = `${this.currentZoom}px`;
-    }
-  }
-
+  
   async loadConfig() {
     try {
       const response = await fetch('/api/config');
@@ -591,9 +540,6 @@ class DeepResearchApp {
         <div class="results-header">
           <h3><i class="fas fa-check-circle"></i> Results</h3>
           <div class="save-actions">
-            <button class="save-btn" onclick="app.saveAs('${result.id}', 'txt')">
-              <i class="fas fa-file-alt"></i> TXT
-            </button>
             <button class="save-btn" onclick="app.saveAs('${result.id}', 'md')">
               <i class="fab fa-markdown"></i> MD
             </button>
@@ -727,11 +673,8 @@ class DeepResearchApp {
     }
 
     const filename = `research_${this.slugify(result.query)}_${Date.now()}`;
-    
-    if (format === 'txt') {
-      const text = `Query: ${result.query}\nTime: ${result.totalTime?.toFixed(1) || 'N/A'}s\n\n${this.stripHtml(result.content)}`;
-      this.downloadFile(text, `${filename}.txt`, 'text/plain');
-    } else if (format === 'md') {
+
+    if (format === 'md') {
       const md = `# ${result.query}\n\n**Time:** ${result.totalTime?.toFixed(1) || 'N/A'}s\n\n---\n\n${result.content}`;
       this.downloadFile(md, `${filename}.md`, 'text/markdown');
     } else if (format === 'pdf') {

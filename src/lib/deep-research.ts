@@ -106,12 +106,12 @@ export class DeepResearchAgent {
         input: input,
         agent: DEEP_RESEARCH_AGENT,
         background: true,
-        store: true, // Required when background=true
+        //store: true, // Required when background=true
         // Use snake_case for agent_config as per REST API conventions
-        agent_config: {
-          type: 'deep-research',
-          thinking_summaries: 'auto',
-        },
+        // agent_config: {
+        //   type: 'deep-research',
+        //   thinking_summaries: 'auto',
+        // },
       };
 
       // console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));

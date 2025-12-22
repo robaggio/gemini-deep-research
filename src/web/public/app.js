@@ -8,7 +8,8 @@ class DeepResearchApp {
     this.activeResultId = null;
     this.startTime = null;
     this.elapsedTimer = null;
-      this.pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+    this.pendingResearch = JSON.parse(localStorage.getItem('pendingResearch') || '[]');
+    this.pollingTimer = null; // 添加轮询定时器控制
     this.init();
   }
 
@@ -33,6 +34,7 @@ class DeepResearchApp {
       this.fileQueue = document.getElementById('fileQueue');
 
     this.startResearchBtn = document.getElementById('startResearchBtn');
+    this.stopResearchBtn = document.getElementById('stopResearchBtn');
     this.progressSection = document.getElementById('progressSection');
     this.progressBar = document.getElementById('progressBar');
     this.progressStatus = document.getElementById('progressStatus');
@@ -52,6 +54,7 @@ class DeepResearchApp {
 
   bindEvents() {
     this.startResearchBtn.addEventListener('click', () => this.startResearch());
+    this.stopResearchBtn.addEventListener('click', () => this.stopResearch());
 
     this.browseBtn.addEventListener('click', () => this.fileInput.click());
     this.browseFolderBtn.addEventListener('click', () => this.folderInput.click());
@@ -239,6 +242,8 @@ class DeepResearchApp {
 
     this.isResearching = true;
     this.startResearchBtn.disabled = true;
+    this.startResearchBtn.classList.add('hidden');
+    this.stopResearchBtn.classList.remove('hidden');
     this.progressSection.classList.remove('hidden');
     this.progressBar.style.width = '0%';
     this.progressStatus.textContent = '启动中...';
@@ -269,11 +274,25 @@ class DeepResearchApp {
         body: formData
       });
 
-      if (!response.ok) throw new Error(`Research failed: ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`创建研究失败: ${response.status} ${response.statusText}`);
+      }
 
       const result = await response.json();
+
+      // 检查响应是否成功
+      if (!result.success) {
+        throw new Error(result.error?.message || '创建研究失败');
+      }
+
       // API returns { success: true, data: { id, status, message } }
       const researchId = result.data?.id || result.researchId || result.id;
+
+      if (!researchId) {
+        throw new Error('未获取到研究ID，创建研究失败');
+      }
+
+      console.log('[App] Research created successfully with ID:', researchId);
       this.currentResearchId = researchId;
       await this.pollForResults(researchId);
 
@@ -281,6 +300,49 @@ class DeepResearchApp {
       console.error('Research error:', error);
       this.showToast('研究失败: ' + error.message, 'error');
       this.resetResearchUI();
+    }
+  }
+
+  async stopResearch() {
+    if (!this.currentResearchId || !this.isResearching) {
+      return;
+    }
+
+    console.log('Stopping research:', this.currentResearchId);
+    this.stopResearchBtn.disabled = true;
+    this.stopResearchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 停止中...';
+
+    // 立即停止轮询定时器
+    if (this.pollingTimer) {
+      clearTimeout(this.pollingTimer);
+      this.pollingTimer = null;
+      console.log('[App] Polling timer cleared');
+    }
+
+    try {
+      const response = await fetch(`/api/research/${this.currentResearchId}/cancel`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        this.showToast('研究已停止', 'info');
+        this.progressStatus.textContent = '研究已停止';
+      } else {
+        this.showToast('停止请求已发送，但研究可能仍在后台停止', 'warning');
+        this.progressStatus.textContent = '停止请求已发送，正在等待响应...';
+      }
+    } catch (error) {
+      console.error('Stop research error:', error);
+      this.showToast('停止请求发送失败，但已停止本地轮询', 'warning');
+      this.progressStatus.textContent = '停止请求发送失败，但已停止本地轮询';
+    } finally {
+      this.stopResearchBtn.disabled = false;
+      this.stopResearchBtn.innerHTML = '<i class="fas fa-stop"></i> 停止';
+
+      // 延迟重置UI，给用户看到反馈
+      setTimeout(() => {
+        this.resetResearchUI();
+      }, 2000);
     }
   }
 
@@ -299,18 +361,49 @@ class DeepResearchApp {
     const maxConsecutiveFailures = 5; // 连续失败5次后才认为有严重问题
 
     const poll = async () => {
+      // 首先检查是否已经取消（用户点击了停止按钮）
+      if (!this.isResearching || this.currentResearchId !== researchId) {
+        console.log('[App] Polling stopped - research cancelled or ended');
+        return;
+      }
+
+      // 如果是第一次轮询，使用较短的间隔，验证研究是否正确启动
+      const isFirstPoll = attempts === 0;
+      const currentPollInterval = isFirstPoll ? 5000 : pollInterval;
+
       try {
         const response = await fetch(`/api/research/${researchId}`);
+
+        // 检查HTTP状态码 - 所有错误都可以重试
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`请求失败 (${response.status}): ${response.statusText}`);
         }
 
         const apiResponse = await response.json();
+
+        // 检查API响应的业务状态
+        if (!apiResponse.success) {
+          // API 返回了明确的业务失败
+          const businessError = apiResponse.error?.message || apiResponse.message || '业务逻辑错误';
+          throw new Error(`业务失败: ${businessError}`);
+        }
+
         // API returns { success: true, data: { id, status, result, ... } }
         const status = apiResponse.data || apiResponse;
 
         // 重置连续失败计数器
         consecutiveFailures = 0;
+
+        // 检查研究状态 - 如果是失败状态，立即停止轮询
+        if (status.status === 'failed' || !status.status) {
+          const errorMsg = status.error || '研究执行失败';
+          console.error('[App] Research failed with status:', status);
+
+          // 立即停止轮询并重置UI，不进入catch块的重试逻辑
+          this.showToast('研究失败: ' + errorMsg, 'error');
+          this.resetResearchUI();
+          return;
+        }
 
         if (status.status === 'completed') {
           // 确保status有query信息，用于标题显示
@@ -321,9 +414,13 @@ class DeepResearchApp {
           const totalTime = (Date.now() - this.startTime) / 1000;
           this.handleResearchComplete(status, totalTime);
           return;
-        } else if (status.status === 'failed') {
-          throw new Error(status.error || 'Research failed');
+        } else if (status.status === 'cancelled') {
+          this.showToast('研究已被取消', 'info');
+          this.progressStatus.textContent = '研究已取消';
+          setTimeout(() => this.resetResearchUI(), 1500);
+          return;
         } else {
+          // 正常进行中的研究，继续轮询
           const progress = Math.min(10 + attempts * 2.5, 90);
           this.progressBar.style.width = progress + '%';
 
@@ -335,29 +432,30 @@ class DeepResearchApp {
           this.progressStatus.textContent = status.message || 'Researching...';
 
           if (++attempts < maxAttempts) {
-            setTimeout(poll, pollInterval);
+            this.pollingTimer = setTimeout(poll, currentPollInterval);
           } else {
             throw new Error('Research timed out');
           }
         }
       } catch (error) {
+        // 所有错误都进入重试机制，提供用户友好的选择
         consecutiveFailures++;
         console.error(`Polling error (${consecutiveFailures}/${maxConsecutiveFailures}):`, error);
 
         // 如果连续失败次数未达到阈值，显示警告但继续轮询
         if (consecutiveFailures < maxConsecutiveFailures) {
-          this.showToast(`网络连接问题 (${consecutiveFailures}/${maxConsecutiveFailures})，正在重试...`, 'warning');
-          this.progressStatus.textContent = `网络连接问题，正在重试... (${consecutiveFailures}/${maxConsecutiveFailures})`;
+          this.showToast(`请求失败 (${consecutiveFailures}/${maxConsecutiveFailures})，正在重试...`, 'warning');
+          this.progressStatus.textContent = `请求失败，正在重试... (${consecutiveFailures}/${maxConsecutiveFailures})`;
 
           // 使用指数退避策略，增加轮询间隔
-          const backoffDelay = Math.min(pollInterval * Math.pow(1.5, consecutiveFailures - 1), 30000);
-          setTimeout(poll, backoffDelay);
+          const backoffDelay = Math.min(currentPollInterval * Math.pow(1.5, consecutiveFailures - 1), 30000);
+          this.pollingTimer = setTimeout(poll, backoffDelay);
           return;
         }
 
-        // 连续失败次数过多，但仍然给用户选择继续的机会
-        this.showToast(`网络连接持续失败，但研究可能仍在进行中`, 'error');
-        this.progressStatus.textContent = '网络连接失败，研究可能仍在进行中...';
+        // 连续失败次数过多，提供用户选择
+        this.showToast(`请求持续失败，但研究可能仍在进行中`, 'error');
+        this.progressStatus.textContent = '请求失败，研究可能仍在进行中...';
 
         // 显示继续选项而不是直接重置
         this.showContinueOption(researchId);
@@ -399,8 +497,18 @@ class DeepResearchApp {
 
   resetResearchUI() {
     clearInterval(this.elapsedTimer);
+
+    // 清理轮询定时器
+    if (this.pollingTimer) {
+      clearTimeout(this.pollingTimer);
+      this.pollingTimer = null;
+      console.log('[App] Polling timer cleared in resetResearchUI');
+    }
+
     this.isResearching = false;
     this.startResearchBtn.disabled = false;
+    this.startResearchBtn.classList.remove('hidden');
+    this.stopResearchBtn.classList.add('hidden');
     this.progressSection.classList.add('hidden');
     this.currentResearchId = null;
     this.startTime = null;

@@ -46,6 +46,9 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
+/* Utility Classes */
+.hidden { display: none !important; }
+
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 /* Header */
@@ -425,6 +428,29 @@ body {
 .research-btn:active:not(:disabled) { transform: translateY(1px); }
 .research-btn:disabled { background: var(--surface-hover); color: var(--text-secondary); box-shadow: none; cursor: not-allowed; }
 .research-btn i { font-size: 1.2rem; }
+
+/* Stop Button */
+.stop-research-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), #dc2626);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.stop-research-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); filter: brightness(1.1); }
+.stop-research-btn:active { transform: translateY(1px); }
+.stop-research-btn:disabled { background: var(--surface-hover); color: var(--text-secondary); box-shadow: none; cursor: not-allowed; }
+.stop-research-btn i { font-size: 1.2rem; }
 
 /* Progress */
 .progress-section { 

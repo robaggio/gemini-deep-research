@@ -54,6 +54,9 @@ const upload = multer({
 // Store active research results in memory (in production, use Redis or database)
 const researchResults = new Map<string, ResearchResult>();
 
+// Store active research agents for cancellation (in production, use Redis or database)
+const researchAgents = new Map<string, any>(); // Store DeepResearchAgent instances
+
 // ============================================
 // Research Endpoints
 // ============================================
@@ -64,17 +67,6 @@ const researchResults = new Map<string, ResearchResult>();
  */
 router.post('/research', upload.array('files', 20), async (req: Request, res: Response) => {
   try {
-    // Log environment information for debugging
-    // console.log('[API] Environment Info:', {
-    //   nodeVersion: process.version,
-    //   platform: process.platform,
-    //   arch: process.arch,
-    //   hasApiKey: !!process.env.GEMINI_API_KEY,
-    //   apiKeyPrefix: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) + '***' : 'MISSING',
-    //   userAgent: req.get('User-Agent'),
-    //   timestamp: new Date().toISOString()
-    // });
-
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({
@@ -92,49 +84,6 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       });
     }
 
-    // Auto-detect GitHub URLs in the query and clone them
-    // TODO: Temporarily commented out GitHub auto-clone functionality
-    /*
-    let repoDocs: DocumentInput[] = [];
-    const githubUrlRegex = /https?:\/\/github\.com\/[\w-]+\/[\w.-]+/gi;
-    const githubUrls = query.match(githubUrlRegex) || [];
-
-    if (githubUrls.length > 0) {
-      try {
-        const { loadDocumentsFromFolder } = await import('../../lib/index.js');
-        const { simpleGit } = await import('simple-git');
-        const git = simpleGit();
-
-        for (const repoUrl of githubUrls) {
-          // Create temp dir for each repo
-          const tempDir = path.join(process.cwd(), 'temp_repos', `repo-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`);
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-          }
-
-          // Clone repo using simple-git library
-          console.log(`[AutoClone] Cloning ${repoUrl} to ${tempDir}`);
-          await git.clone(repoUrl, tempDir, ['--depth', '1']);
-
-          // Load documents
-          const allowedExtensions = ['.ts', '.js', '.py', '.java', '.c', '.cpp', '.h', '.hpp', '.md', '.txt', '.json', '.xml', '.html', '.css', '.go', '.rs'];
-          const docs = await loadDocumentsFromFolder(tempDir, {
-            recursive: true,
-            extensions: allowedExtensions,
-          });
-          repoDocs.push(...docs);
-
-          // Cleanup repo
-          fs.rmSync(tempDir, { recursive: true, force: true });
-          console.log(`[AutoClone] Loaded ${docs.length} files from ${repoUrl}`);
-        }
-      } catch (err) {
-        console.error('Repo clone error:', err);
-        // Continue without repo documents
-      }
-    }
-    */
-
     // Load uploaded files
     let documents: DocumentInput[] = [];
     const files = req.files as Express.Multer.File[];
@@ -150,19 +99,9 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
         fs.unlink(file.path, () => {});
       }
     }
-    //console.log('[API] Received documents:', documents.length, 'documents');
-    //console.log('[API] Document details:', documents.map(d => ({ name: d.name, mimeType: d.mimeType, contentLength: d.content?.length })));
 
     // Create agent and start research
     const agent = createDeepResearchAgent(apiKey);
-    // console.log('[API] Starting research with', documents.length > 0 ? `${documents.length} documents` : 'no documents');
-    console.log('[API] Research options:', {
-      depth,
-      format,
-      sources,
-      citations,
-      refineWithThinking: refineWithThinking === 'true' || refineWithThinking === true
-    });
 
     // Generate result ID
     const resultId = `research_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -174,7 +113,11 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       status: 'processing',
       progress: 0,
       createdAt: new Date(),
+      interactionId: undefined, // 将在创建交互时设置
     });
+
+    // Store agent instance for cancellation
+    researchAgents.set(resultId, agent);
 
     // Return immediately with result ID (async processing)
     res.json({
@@ -201,10 +144,40 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
           },
         },
         (event) => {
-          // Update progress
+          // Update progress and capture interaction ID
           const current = researchResults.get(resultId);
-          if (current && event.data?.progress) {
-            current.progress = event.data.progress;
+          if (current) {
+            // Handle error events immediately
+            if (event.type === 'error') {
+              console.error('[API] Research failed via event:', event.data?.error);
+              current.status = 'failed';
+              current.error = event.data?.error || 'Unknown error occurred during research';
+              current.completedAt = new Date();
+              researchResults.set(resultId, current);
+
+              // Clean up agent on error asynchronously
+              const agent = researchAgents.get(resultId);
+              if (agent) {
+                // Schedule cleanup without awaiting
+                setImmediate(async () => {
+                  try {
+                    await agent.closeSession();
+                  } catch (closeError) {
+                    console.warn('[API] Failed to close agent session on error:', closeError);
+                  }
+                });
+                researchAgents.delete(resultId);
+              }
+              return;
+            }
+
+            if (event.data?.progress) {
+              current.progress = event.data.progress;
+            }
+            // Capture interaction ID if available
+            if (event.data?.interactionId) {
+              current.interactionId = event.data.interactionId;
+            }
             researchResults.set(resultId, current);
           }
         }
@@ -213,8 +186,9 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
       // Store completed result
       researchResults.set(resultId, result);
 
-      // Close session
+      // Close session and clean up agent
       await agent.closeSession();
+      researchAgents.delete(resultId);
     } catch (error) {
       // Store error result
       researchResults.set(resultId, {
@@ -224,6 +198,14 @@ router.post('/research', upload.array('files', 20), async (req: Request, res: Re
         error: error instanceof Error ? error.message : 'Unknown error',
         createdAt: new Date(),
       });
+
+      // Clean up agent on error
+      try {
+        await agent.closeSession();
+      } catch (closeError) {
+        console.warn('[API] Failed to close agent session:', closeError);
+      }
+      researchAgents.delete(resultId);
     }
   } catch (error) {
     console.error('Research error:', error);
@@ -259,18 +241,133 @@ router.get('/research/:id', (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/research/:id/cancel
+ * Cancel an ongoing research
+ */
+router.post('/research/:id/cancel', async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({
+        success: false,
+        error: { code: 'NO_API_KEY', message: 'GEMINI_API_KEY is not configured' }
+      });
+    }
+
+    // Check if research exists and is still processing
+    const research = researchResults.get(id);
+    if (!research) {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Research not found' }
+      });
+    }
+
+    if (research.status !== 'processing') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'NOT_PROCESSING', message: 'Research is not currently processing' }
+      });
+    }
+
+    // Mark the research as cancelled locally to ensure immediate response
+    console.log(`[API] Marking research ${id} as cancelled`);
+    research.status = 'cancelled';
+    researchResults.set(id, research);
+
+    // Try to cancel the interaction using the existing DeepResearchAgent
+    const agent = researchAgents.get(id);
+
+    if (research.interactionId && agent) {
+      try {
+        console.log(`[API] Attempting to cancel interaction: ${research.interactionId}`);
+        const cancelSuccess = await agent.cancelInteraction(research.interactionId);
+
+        if (cancelSuccess) {
+          console.log(`[API] Cancel request sent successfully for interaction: ${research.interactionId}`);
+        } else {
+          console.warn(`[API] Cancel request failed for interaction: ${research.interactionId}, but research is marked as cancelled locally`);
+        }
+      } catch (cancelError) {
+        console.warn('[API] Cancel request failed, but research is marked as cancelled locally:', cancelError);
+        // Even if cancel request fails, we still consider the research cancelled
+      }
+    } else {
+      if (!research.interactionId) {
+        console.warn('[API] No interaction ID available for research:', id, '- marking as cancelled locally');
+      }
+      if (!agent) {
+        console.warn('[API] No agent instance found for research:', id, '- marking as cancelled locally');
+      }
+    }
+
+    // Clean up agent after cancellation attempt
+    if (agent) {
+      try {
+        await agent.closeSession();
+        researchAgents.delete(id);
+        console.log('[API] Agent session closed and cleaned up after cancellation');
+      } catch (closeError) {
+        console.warn('[API] Failed to close agent session after cancellation:', closeError);
+        researchAgents.delete(id); // Still try to remove from map
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Research cancelled successfully'
+    });
+
+  } catch (error) {
+    console.error('Cancel research error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'CANCEL_ERROR',
+        message: error instanceof Error ? error.message : 'Failed to cancel research'
+      }
+    });
+  }
+});
+
+/**
  * DELETE /api/research/:id
  * Delete research result
  */
-router.delete('/research/:id', (req: Request, res: Response) => {
+router.delete('/research/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  if (researchResults.has(id)) {
-    researchResults.delete(id);
-    res.json({ success: true, message: 'Result deleted' });
-  } else {
-    // If not found (maybe already expired or cleaned up), still return success for idempotency
-    res.json({ success: true, message: 'Result not found or already deleted' });
+  try {
+    // Clean up agent instance if exists
+    const agent = researchAgents.get(id);
+    if (agent) {
+      try {
+        await agent.closeSession();
+        console.log(`[API] Cleaned up agent session for deleted research: ${id}`);
+      } catch (closeError) {
+        console.warn(`[API] Failed to close agent session for deleted research ${id}:`, closeError);
+      }
+      researchAgents.delete(id);
+    }
+
+    if (researchResults.has(id)) {
+      researchResults.delete(id);
+      res.json({ success: true, message: 'Result deleted' });
+    } else {
+      // If not found (maybe already expired or cleaned up), still return success for idempotency
+      res.json({ success: true, message: 'Result not found or already deleted' });
+    }
+  } catch (error) {
+    console.error('Delete research error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'DELETE_ERROR',
+        message: error instanceof Error ? error.message : 'Failed to delete research'
+      }
+    });
   }
 });
 

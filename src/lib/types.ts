@@ -195,12 +195,13 @@ export interface SkippedFile {
 export interface ResearchResult {
   id: string;
   query: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   progress?: number; // 0-100
   content?: string;
   sources?: SourceInfo[];
   metadata?: ResearchMetadata;
   error?: string;
+  interactionId?: string; // Gemini Interactions API ID
   createdAt: Date;
   completedAt?: Date;
 }
@@ -228,6 +229,7 @@ export interface ResearchEvent {
     content?: string;
     source?: SourceInfo;
     error?: string;
+    interactionId?: string; // For cancellation support
   };
 }
 

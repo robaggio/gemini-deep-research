@@ -35,7 +35,7 @@ import {
 // Deep Research Pro Preview Agent
 // See: https://ai.google.dev/gemini-api/docs/deep-research
 const DEEP_RESEARCH_AGENT = 'deep-research-pro-preview-12-2025';
-const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
+const API_BASE_URL = 'https://robaggio--2ceb5ea0df0d11f083c042dde27851f2.web.val.run/v1beta';
 const POLL_INTERVAL = 20000; // 10 seconds as recommended by docs, we use 20 to reduce fatech requests
 const MAX_RESEARCH_TIME = 60 * 60 * 1000; // 60 minutes max
 
@@ -43,6 +43,7 @@ export class DeepResearchAgent {
   private client: GeminiClient;
   private config: GeminiConfig;
   private activeSession: Session | null = null;
+  private isCancelled: boolean = false;
 
   constructor(config: GeminiConfig) {
     this.config = config;
@@ -79,13 +80,13 @@ export class DeepResearchAgent {
     const startTime = Date.now();
     const resultId = `research_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Reset cancellation flag at the start of research
+    this.isCancelled = false;
+
     // Emit start event
     this.emitEvent(onEvent, { type: 'start', timestamp: new Date() });
 
     try {
-      // console.log('[DeepResearch] Using Gemini Deep Research Agent:', DEEP_RESEARCH_AGENT);
-      // console.log('[DeepResearch] API Base URL:', API_BASE_URL);
-
       // Build the research input
       const input = this.buildResearchInput(request);
 
@@ -106,53 +107,22 @@ export class DeepResearchAgent {
         input: input,
         agent: DEEP_RESEARCH_AGENT,
         background: true,
-        //store: true, // Required when background=true
-        // Use snake_case for agent_config as per REST API conventions
-        // agent_config: {
-        //   type: 'deep-research',
-        //   thinking_summaries: 'auto',
-        // },
+        agent_config: {
+          type: 'deep-research',
+          thinking_summaries: 'none',
+        },
       };
 
-      // console.log('[DeepResearch] Request body:', JSON.stringify(createBody, null, 2).replace(this.config.apiKey, '***'));
-
-      // console.log('[DeepResearch] Request URL:', createUrl);
-      // console.log('[DeepResearch] Request Headers:', {
-      //   'Content-Type': 'application/json',
-      //   'x-goog-api-key': this.config.apiKey ? this.config.apiKey.substring(0, 10) + '***' : 'MISSING'
-      // });
       console.log('[DeepResearch] Request Body:', JSON.stringify(createBody, null, 2));
-
-      //测试功能，临时返回
-      // return {
-      //   id: resultId,
-      //   status: 'completed',
-      //   content: '测试内容',
-      //   sources: [],
-      //   metadata: {
-      //     depth: request.options?.depth || 'deep',
-      //     outputFormat: request.options?.outputFormat || 'markdown',
-      //     documentsUsed: request.documents?.length || 0,
-      //     sourcesFound: 0,
-      //     processingTime: Date.now() - startTime,
-      //   },
-      //   query: request.query,
-      //   progress: 100,
-      //   createdAt: new Date(startTime),
-      //   completedAt: new Date(),
-      // };
 
       const createResponse = await axios.post(createUrl, createBody, {
         headers: {
           'Content-Type': 'application/json',
           'x-goog-api-key': this.config.apiKey
         },
-        timeout: 30000
+        timeout: 30000,
+        validateStatus: () => true
       });
-
-      // console.log('[DeepResearch] Response Status:', createResponse.status);
-      // console.log('[DeepResearch] Response Headers:', createResponse.headers);
-      // console.log('[DeepResearch] Response Data:', JSON.stringify(createResponse.data, null, 2));
 
       if (createResponse.status < 200 || createResponse.status >= 300) {
         console.error('[DeepResearch] Create Interaction Error:', createResponse.data);
@@ -167,9 +137,16 @@ export class DeepResearchAgent {
 
       const interaction = createResponse.data;
       const interactionId = interaction.id || interaction.name;
-      
+
       console.log('[DeepResearch] Interaction started:', interactionId);
-      this.emitEvent(onEvent, { type: 'progress', timestamp: new Date(), data: { progress: 10 } });
+      this.emitEvent(onEvent, {
+        type: 'progress',
+        timestamp: new Date(),
+        data: {
+          progress: 10,
+          interactionId: interactionId // Emit interaction ID for cancellation
+        }
+      });
 
       // Poll for results
       const result = await this.pollForCompletion(interactionId, startTime, onEvent);
@@ -222,29 +199,6 @@ export class DeepResearchAgent {
     } catch (error: any) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[DeepResearch] Error:', errorMessage);
-
-      // Log detailed error information
-      if (error.response) {
-        console.error('[DeepResearch] HTTP Error Details:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
-          headers: error.response.headers,
-          url: error.config?.url,
-          method: error.config?.method
-        });
-      } else if (error.request) {
-        console.error('[DeepResearch] Network Error Details:', {
-          message: error.message,
-          code: error.code,
-          errno: error.errno,
-          syscall: error.syscall,
-          address: error.address,
-          port: error.port
-        });
-      } else {
-        console.error('[DeepResearch] Error Stack:', error.stack);
-      }
 
       this.emitEvent(onEvent, { type: 'error', timestamp: new Date(), data: { error: errorMessage } });
       return {
@@ -322,6 +276,16 @@ ${content}`;
     let progressPercent = 10;
 
     while (Date.now() - startTime < MAX_RESEARCH_TIME) {
+      // Check for cancellation before each poll
+      if (this.isCancelled) {
+        console.log('[DeepResearch] Research was cancelled, stopping polling');
+        return {
+          status: 'cancelled',
+          content: '',
+          error: 'Research was cancelled by user'
+        };
+      }
+
       await this.sleep(POLL_INTERVAL);
 
       console.log('[DeepResearch] Polling for results...');
@@ -335,60 +299,16 @@ ${content}`;
             'Content-Type': 'application/json',
             'x-goog-api-key': this.config.apiKey
           },
-          timeout: 30000
+          timeout: 30000,
         });
       } catch (error: any) {
         // Handle network errors and HTTP errors (including 502)
-        if (error.response) {
-          // The server responded with an error status
-          if (error.response.status === 502) {
-            console.warn('[DeepResearch] Received 502 Bad Gateway, continuing to poll...');
-            continue; // Skip to next poll iteration
-          }
-
-          console.error('[DeepResearch] HTTP Error:', {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data
-          });
-
-          // For other HTTP errors, we might want to continue polling for transient issues
-          if (error.response.status >= 500 && error.response.status < 600) {
-            console.warn('[DeepResearch] Server error, continuing to poll...');
-            continue; // Skip to next poll iteration
-          }
-
-          // For client errors (4xx), we should probably fail
-          throw new Error(error.response.data?.error?.message || `HTTP error: ${error.response.status} ${error.response.statusText}`);
-        } else if (error.request) {
-          // Network error (no response received)
-          console.error('[DeepResearch] Network Error:', error.message);
-          console.warn('[DeepResearch] Network error, continuing to poll...');
-          continue; // Skip to next poll iteration
-        } else {
-          // Other error (e.g., timeout)
-          console.error('[DeepResearch] Request Error:', error.message);
-          if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-            console.warn('[DeepResearch] Timeout error, continuing to poll...');
-            continue; // Skip to next poll iteration
-          }
-          throw error; // Re-throw unexpected errors
-        }
+        console.warn('[DeepResearch] Server error, continuing to poll...');
+        continue; // Skip to next poll iteration
       }
 
       console.log('[DeepResearch] Poll Response Status:', response.status);
       console.log('[DeepResearch] Poll Response Data:', JSON.stringify(response.data, null, 2));
-
-      if (response.status < 200 || response.status >= 300) {
-        console.error('[DeepResearch] Poll Error:', response.data);
-        console.error('[DeepResearch] Full Poll Error Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: response.data,
-          headers: response.headers
-        });
-        throw new Error(response.data?.error?.message || `Poll error: ${response.status}`);
-      }
 
       const interaction = response.data;
       const status = interaction.status || interaction.state;
@@ -534,6 +454,58 @@ ${content}`;
    */
   getSession(): Session | null {
     return this.activeSession;
+  }
+
+  /**
+   * Cancel an ongoing research interaction
+   */
+  async cancelInteraction(interactionId: string): Promise<boolean> {
+    // Set the cancellation flag first to stop polling
+    this.isCancelled = true;
+    console.log(`[DeepResearch] Setting cancellation flag for interaction: ${interactionId}`);
+
+    // Try to call the external cancel API using proxy domain
+    try {
+      // Use proxy domain for cancellation
+      const cancelUrl = `${API_BASE_URL}/interactions/${interactionId}/cancel`;
+
+      const response = await axios.post(cancelUrl, {}, {
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': this.config.apiKey
+        },
+        timeout: 10000
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        console.log(`[DeepResearch] Successfully cancelled interaction: ${interactionId}`);
+        return true;
+      } else {
+        console.warn(`[DeepResearch] Cancel request failed with status ${response.status} for interaction: ${interactionId}, but local cancellation will work`);
+        return true; // Return true because local cancellation will work
+      }
+    } catch (error: any) {
+      console.error('[DeepResearch] Cancel interaction error:', error);
+
+      // Log detailed error information
+      if (error.response) {
+        console.error('[DeepResearch] Cancel HTTP Error Details:', {
+          status: error.response.status,
+          statusText: error.response.statusText,
+          data: error.response.data
+        });
+        console.warn('[DeepResearch] External cancel API failed, but local cancellation will work');
+      } else if (error.request) {
+        console.error('[DeepResearch] Cancel Network Error:', error.message);
+        console.warn('[DeepResearch] Network error for cancel API, but local cancellation will work');
+      } else {
+        console.error('[DeepResearch] Cancel Error:', error.message);
+        console.warn('[DeepResearch] Cancel API error, but local cancellation will work');
+      }
+
+      // Always return true because local cancellation (stopping polling) will work
+      return true;
+    }
   }
 
   /**

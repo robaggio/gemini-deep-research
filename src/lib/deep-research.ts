@@ -474,7 +474,8 @@ ${content}`;
           'Content-Type': 'application/json',
           'x-goog-api-key': this.config.apiKey
         },
-        timeout: 10000
+        timeout: 10000,
+        validateStatus: () => true
       });
 
       if (response.status >= 200 && response.status < 300) {
@@ -486,23 +487,6 @@ ${content}`;
       }
     } catch (error: any) {
       console.error('[DeepResearch] Cancel interaction error:', error);
-
-      // Log detailed error information
-      if (error.response) {
-        console.error('[DeepResearch] Cancel HTTP Error Details:', {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        });
-        console.warn('[DeepResearch] External cancel API failed, but local cancellation will work');
-      } else if (error.request) {
-        console.error('[DeepResearch] Cancel Network Error:', error.message);
-        console.warn('[DeepResearch] Network error for cancel API, but local cancellation will work');
-      } else {
-        console.error('[DeepResearch] Cancel Error:', error.message);
-        console.warn('[DeepResearch] Cancel API error, but local cancellation will work');
-      }
-
       // Always return true because local cancellation (stopping polling) will work
       return true;
     }

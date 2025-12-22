@@ -1122,7 +1122,7 @@ class DeepResearchApp {
           // 从待处理研究中移除
           this.removeFromPendingResearch(researchId);
         } else if (status.status === 'failed') {
-          this.showToast('研究失败: ' + (status.error || '未知错误'), 'error');
+          this.showToast('研究失败: ' + (status.error || '未知错误') + ' 建议使用英文提问', 'error');
           this.removeFromPendingResearch(researchId);
           this.resetResearchUI();
         } else {
